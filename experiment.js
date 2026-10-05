@@ -241,7 +241,7 @@ if (!isComputer()) {
 
   // ─── 3. TEST AUDITIF ────────────────────────────────────────────────────────
   const AUDIO_TEST_TRIALS = 10;
-  const AUDIO_TEST_THRESHOLD = 7;
+  const AUDIO_TEST_THRESHOLD = 8;
   let audioTestCorrect = 0;
   let audioTestIndex = 0;
   let audioTestSequence = [];
@@ -297,28 +297,80 @@ if (!isComputer()) {
     choices: ["Commencer les 10 écoutes"]
   });
 
-  const audioTestBlock = {
+ const audioTestBlock = {
     timeline: [
+      // 1. La série des 10 sons
       {
-        type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Cliquez pour jouer le son.</p>`,
-        choices: ["🔊 Écouter le son"],
-        on_finish: () => { playPitch(audioTestSequence[audioTestIndex] === 'high'); }
+        timeline: [
+          {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: () => `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Cliquez pour jouer le son.</p>`,
+            choices: ["🔊 Écouter le son"],
+            on_finish: () => { playPitch(audioTestSequence[audioTestIndex] === 'high'); }
+          },
+          {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: () => `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Ce son était-il <strong>grave</strong> ou <strong>aigu</strong> ?</p>`,
+            choices: ["Grave 🔽", "Aigu 🔼"],
+            on_finish: function (data) {
+              const responded = data.response === 0 ? 'low' : 'high';
+              const correct = audioTestSequence[audioTestIndex];
+              if (responded === correct) audioTestCorrect++;
+              audioTestIndex++;
+            }
+          }
+        ],
+        loop_function: () => audioTestIndex < AUDIO_TEST_TRIALS
       },
+      // 2. Écran de résultat avec boucle de rattrapage
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Ce son était-il <strong>grave</strong> ou <strong>aigu</strong> ?</p>`,
-        choices: ["Grave 🔽", "Aigu 🔼"],
+        stimulus: function () {
+          if (audioTestCorrect >= AUDIO_TEST_THRESHOLD) {
+            return `
+              <div style="max-width:550px;margin:auto;text-align:center;line-height:1.6;">
+                <p style="font-size:1.3rem;">✅ <strong>Test réussi !</strong></p>
+                <p>Votre score : <strong>${audioTestCorrect} / ${AUDIO_TEST_TRIALS}</strong>.</p>
+                <p style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;padding:12px;border-radius:8px;font-size:0.95rem;">
+                  🔊 <strong>Important :</strong> pensez à <strong>bien monter le volume sonore</strong> de votre ordinateur afin de percevoir clairement tous les sons durant l'expérience.
+                </p>
+              </div>
+            `;
+          } else {
+            return `
+              <div style="max-width:550px;margin:auto;text-align:center;line-height:1.6;">
+                <p style="font-size:1.3rem;color:#b91c1c;">⚠️ <strong>Score insuffisant</strong></p>
+                <p>Votre score : <strong>${audioTestCorrect} / ${AUDIO_TEST_TRIALS}</strong> (le minimum requis est de <strong>8 / 10</strong>).</p>
+                <p style="color:#475569;font-size:0.95rem;">
+                  Pour que vos données soient exploitables, il est indispensable de bien distinguer les deux sons. Veuillez augmenter le volume de votre ordinateur ou brancher un casque audio avant de recommencer.
+                </p>
+              </div>
+            `;
+          }
+        },
+        choices: function () {
+          return audioTestCorrect >= AUDIO_TEST_THRESHOLD
+            ? ["Continuer vers l'expérience"]
+            : ["Recommencer le test sonore"];
+        },
+        data: { phase: "audio_test_result", speedcondition },
         on_finish: function (data) {
-          const responded = data.response === 0 ? 'low' : 'high';
-          const correct = audioTestSequence[audioTestIndex];
-          if (responded === correct) audioTestCorrect++;
-          audioTestIndex++;
+          data.audio_test_score = audioTestCorrect;
+          data.audio_test_passed = audioTestCorrect >= AUDIO_TEST_THRESHOLD;
+          audioTestPassed = audioTestCorrect >= AUDIO_TEST_THRESHOLD;
+          // Si échec, on réinitialise les compteurs pour le nouvel essai
+          if (!audioTestPassed) {
+            audioTestCorrect = 0;
+            audioTestIndex = 0;
+            audioTestSequence = generateAudioTestSequence();
+          }
         }
       }
     ],
-    loop_function: () => audioTestIndex < AUDIO_TEST_TRIALS
+    // Répète tout le bloc tant que le score est inférieur à 8/10
+    loop_function: () => !audioTestPassed
   };
+
   timeline.push(audioTestBlock);
 
   timeline.push({
