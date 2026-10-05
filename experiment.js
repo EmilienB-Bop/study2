@@ -1,4 +1,4 @@
-// ─── INITIALISATION FIREBASE ────────────────────────────────────────────────
+// ─── INITIALISATION FIREBASE (DATABASE AUDIO-8FF24) ─────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyCrwPKIYzh6UYcsVOcsGo1AKy8q4MD2rMY",
   authDomain: "audio-8ff24.firebaseapp.com",
@@ -15,7 +15,7 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 const db = (typeof firebase !== 'undefined') ? firebase.database() : null;
 const subject_id = "sub_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
 
-// ─── DÉTECTION MOBILE ───────────────────────────────────────────────────────
+// ─── DÉTECTION MOBILE ROBUSTE ──────────────────────────────────────────────
 function isComputer() {
   const ua = navigator.userAgent.toLowerCase();
   const isMobileUA = /mobile|android|iphone|ipod|blackberry|iemobile|opera mini/.test(ua);
@@ -32,7 +32,8 @@ if (!isComputer()) {
       <div style="max-width:480px;background:#f8fafc;border:1px solid #cbd5e1;padding:30px 20px;border-radius:16px;">
         <div style="font-size:3rem;margin-bottom:12px;">💻</div>
         <h2>Appareil non compatible</h2>
-        <p>Cette étude nécessite impérativement un <strong>ordinateur</strong> avec clavier et souris.</p>
+        <p>Pour passer cette expérience, il vous faut impérativement être sur un ordinateur (clavier et souris).</p>
+        <p>Merci de renouveler l'expérience depuis un ordinateur.</p>
         <button onclick="window.location.href='https://www.univ-tlse2.fr/'" style="padding:12px 24px;font-weight:600;color:#fff;background:#2563eb;border:none;border-radius:8px;cursor:pointer;">Quitter</button>
       </div>
     </div>
@@ -45,6 +46,7 @@ if (!isComputer()) {
 
   const timeline = [];
 
+  // Conditions expérimentales
   const speedcondition = Math.random() < 0.5 ? "slow" : "fast";
   const unexpectedSpeed = speedcondition === "slow" ? -80 : -200;
 
@@ -118,20 +120,52 @@ if (!isComputer()) {
     shape.pitch = Math.random() < 0.5 ? 'high' : 'low';
   }
 
-  // 1. Consentement éclairé
+  // ─── 0. NOTICE D'INFORMATION ET DE CONSENTEMENT COMPLÈTE ──────────────────
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
       <div style="max-width:780px;margin:20px auto;text-align:left;line-height:1.55;font-size:0.88rem;background:#f8fafc;padding:24px;border-radius:12px;border:1px solid #cbd5e1;max-height:70vh;overflow-y:auto;color:#1e293b;">
-        <h2 style="text-align:center;font-size:1.25rem;margin-top:0;color:#0f172a;">Formulaire d'information et de consentement libre et éclairé</h2>
-        <p>Avant d’accepter de participer à ce projet de recherche, veuillez prendre le temps de lire ce document. Vous pouvez interrompre votre participation à tout moment sans conséquence.</p>
+        <h2 style="text-align:center;font-size:1.25rem;margin-top:0;color:#0f172a;">Notice d'information et consentement libre et éclairé</h2>
+        
+        <p>Avant d’accepter de participer à ce projet de recherche, veuillez prendre le temps de lire et de comprendre les renseignements qui suivent. Ce document vous explique le but de ce projet de recherche, ses procédures, avantages, risques et inconvénients. Nous vous rappelons que vous pouvez interrompre votre participation à l'étude à tout moment sans avoir à vous justifier. Un refus de participer n'aura aucune conséquence sur votre relation avec l'équipe de recherche qui la propose.</p>
+        
         <p style="background:rgba(46,204,113,0.15);padding:8px 12px;border-radius:6px;border-left:4px solid #2ecc71;">
-          <strong>Avis éthique :</strong> Avis favorable du CER Toulouse (n° 2026_1242, 18/02/2026).
+          <strong>Avis éthique :</strong> Cette étude a reçu un avis favorable du Comité d’Éthique de la Recherche de Toulouse (avis n° 2026_1242, en date du 18/02/2026).
         </p>
-        <p><strong>Responsable scientifique :</strong> Pr Céline Lemercier, CLLE & CNRS, Université Jean Jaurès (<a href="mailto:celine.lemercier@univ-tlse2.fr" style="color:#2563eb;">celine.lemercier@univ-tlse2.fr</a>).</p>
-        <p><strong>Méthodologie :</strong> Vous effectuerez un court test auditif puis compterez les rebonds de formes à l'écran émettant un signal sonore spécifique (5 essais de 30 s). Durée : environ 15 minutes.</p>
-        <p><strong>Confidentialité :</strong> Étude strictement anonyme. Aucune donnée identifiante n'est recueillie.</p>
-        <p><strong>Contacts :</strong> DPO (<a href="mailto:dr14-rgpd@cnrs.fr" style="color:#2563eb;">dr14-rgpd@cnrs.fr</a>) | CER (<a href="mailto:bureau-cer@univ-toulouse.fr" style="color:#2563eb;">bureau-cer@univ-toulouse.fr</a>).</p>
+
+        <p><strong>Chercheur titulaire responsable scientifique du projet :</strong><br>
+        Pr Céline Lemercier, Laboratoire CLLE & CNRS, Université Jean Jaurès, 5 allée Antonio Machado 31058 Toulouse cedex 9, <a href="mailto:celine.lemercier@univ-tlse2.fr" style="color:#2563eb;">celine.lemercier@univ-tlse2.fr</a><br>
+        <strong>Lieu de recherche :</strong> Université Toulouse Jean Jaurès, laboratoire CLLE.</p>
+
+        <p><strong>But du projet de recherche :</strong> Ce projet vise à étudier quels sont les paramètres du stimulus qui permettent d’améliorer sa perception.</p>
+
+        <p><strong>Ce que l’on attend de vous (méthodologie) :</strong><br>
+        Si vous acceptez de participer à cette étude, vous êtes invité·e à répondre à quelques questions puis à compter le nombre de rebonds de formes qu’on vous aura préalablement décrites contre les bords de l’écran. Vous aurez 5 essais de 30 secondes pendant lesquels des formes se déplaceront sur l’écran en rebondissant contre les bords. On vous demandera de compter les rebonds d’un groupe précis de ces objets. L’expérience dure en tout 15 minutes (en incluant la lecture du présent consentement et le débriefing).</p>
+
+        <p><strong>Vos droits de vous retirer de la recherche en tout temps :</strong><br>
+        1. Votre contribution à cette recherche est volontaire ;<br>
+        2. Vous pouvez cesser votre participation à tout moment, et cela n’aura aucune conséquence. Cependant, lorsque votre participation sera terminée, il ne sera plus possible de la retirer. En effet, la stricte confidentialité de cette étude rend impossible la rectification ou la suppression des informations vous concernant, vu que nous ne pourrons pas identifier votre réponse parmi les réponses reçues.</p>
+
+        <p><strong>Vos droits à la confidentialité et au respect de la vie privée :</strong><br>
+        Cette étude est strictement anonyme, c'est-à-dire que les données collectées ne permettront pas de vous identifier, même indirectement, de quelque manière que ce soit.<br>
+        1. Les données obtenues seront traitées avec la plus entière confidentialité.<br>
+        2. Aucun renseignement ne sera dévoilé qui puisse révéler votre identité.<br>
+        3. Les données seront conservées dans un endroit sécurisé (seul le responsable de l'étude y aura accès).</p>
+
+        <p><strong>Bénéfices :</strong><br>
+        • <em>Bénéfices en termes d’avancées scientifiques :</em> L’étude va permettre d’apporter un éclairage sur les paramètres du stimulus déterminants dans le taux de capture attentionnelle.<br>
+        • <em>Bénéfices pour la société :</em> La détermination des paramètres du stimulus impactant le taux de capture attentionnelle a d’importants bénéfices possibles dans tous les domaines complexes où l’attention est sollicitée et des événements complexes sont susceptibles de se produire. C’est le cas dans l’aviation, dans la conduite automobile par exemple.<br>
+        • <em>Bénéfices pour le participant :</em> La satisfaction profonde de participer à l’avancée de la science.</p>
+
+        <p><strong>Risques possibles :</strong><br>
+        À notre connaissance, cette recherche n’implique aucun risque ou inconfort autre que ceux de la vie quotidienne.</p>
+
+        <p><strong>Diffusion :</strong><br>
+        Cette recherche sera diffusée dans des colloques et elle sera publiée dans des actes de colloque et des articles de revue académique. Vous pourrez prendre connaissance des résultats généraux de la présente étude en contactant le responsable scientifique de l’étude Pr Céline Lemercier.</p>
+
+        <p><strong>Vos droits de poser des questions en tout temps :</strong><br>
+        Si vous avez des questions relatives à la protection de vos données, merci de contacter le DPO de l’établissement (<a href="mailto:dr14-rgpd@cnrs.fr" style="color:#2563eb;">dr14-rgpd@cnrs.fr</a>).<br>
+        Si vous avez des questions relatives à l’éthique du projet, vous pouvez contacter le Comité d’Éthique de la Recherche de Toulouse (<a href="mailto:bureau-cer@univ-toulouse.fr" style="color:#2563eb;">bureau-cer@univ-toulouse.fr</a>).</p>
       </div>
     `,
     choices: ["Je refuse de participer", "J'ai lu, compris et j'accepte de participer"],
@@ -141,24 +175,33 @@ if (!isComputer()) {
     ],
     on_finish: function (data) {
       if (data.response === 0) {
-        jsPsych.abort(`<div style="text-align:center;padding:50px;font-family:sans-serif;"><h3>Participation annulée</h3><p>Redirection en cours...</p></div>`);
-        setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 1500);
+        document.body.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;text-align:center;font-family:sans-serif;color:#0f172a;background:#fff;">
+            <h2>Participation annulée</h2>
+            <p>Vous avez choisi de ne pas participer à cette étude. Aucune donnée n'a été enregistrée.</p>
+            <p style="color:#64748b;">Redirection en cours vers l'université...</p>
+          </div>
+        `;
+        setTimeout(() => {
+          window.location.href = "https://www.univ-tlse2.fr/";
+        }, 1500);
       }
     }
   });
 
-  // 2. Plein écran
+  // ─── 1. PLEIN ÉCRAN ─────────────────────────────────────────────────────────
   timeline.push({
     type: jsPsychFullscreen,
     fullscreen_mode: true,
     message: `<div style="max-width:650px;margin:auto;text-align:center;line-height:1.6;">
       <p><strong>Bienvenue dans cette étude !</strong></p>
-      <p>Installez-vous confortablement face à votre écran et vérifiez que votre son est actif.</p>
+      <p>Pour la validité des mesures, merci de vous installer confortablement à <strong>environ une longueur de bras de votre écran</strong> (50 à 60 cm) et d'activer le son de votre ordinateur.</p>
+      <p>L'expérience va démarrer en plein écran.</p>
     </div>`,
     button_label: "Passer en plein écran"
   });
 
-  // 3. Démographie
+  // ─── 2. DÉMOGRAPHIE (ALIGNÉE VERTICALEMENT) ─────────────────────────────────
   timeline.push({
     type: jsPsychSurveyMultiChoice,
     questions: [{ prompt: "Quel est votre sexe ?", options: ["Homme", "Femme", "Non-binaire", "Autre", "Préfère ne pas répondre"], required: true }],
@@ -173,7 +216,7 @@ if (!isComputer()) {
     on_finish: function (data) { data.participant_age = data.response.Q0; }
   });
 
-  // 4. Test auditif
+  // ─── 3. TEST AUDITIF ────────────────────────────────────────────────────────
   const AUDIO_TEST_TRIALS = 10;
   const AUDIO_TEST_THRESHOLD = 7;
   let audioTestCorrect = 0;
@@ -191,21 +234,26 @@ if (!isComputer()) {
     return seq;
   }
 
+  // Écran de familiarisation : deux boutons bleus identiques
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
       <p><strong>Test de perception auditive</strong></p>
-      <p>Vérifions d'abord que vous distinguez bien les deux sons de l'expérience :</p>
-      <div style="display:flex;gap:32px;justify-content:center;margin:24px 0;">
-        <div style="padding:20px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;min-width:140px;">
-          <p><strong>Son Grave 🔽</strong></p>
-          <button id="playLow" type="button" class="jspsych-btn" style="background:#64748b;">🔊 Écouter</button>
+      <p>Avant de démarrer la tâche visuelle, nous vérifions que vous entendez et distinguez bien les deux sons de l'expérience.</p>
+      <p>Cliquez sur chaque bouton pour écouter les deux sons :</p>
+      <div style="display:flex;gap:32px;justify-content:center;align-items:stretch;margin:24px 0;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 28px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;min-width:140px;">
+          <span style="font-size:1em;font-weight:bold;color:#333;">Son Grave</span>
+          <span style="font-size:2em;">🔽</span>
+          <button id="playLow" type="button" class="jspsych-btn" style="background:#2563eb;font-size:0.95em;">🔊 Écouter</button>
         </div>
-        <div style="padding:20px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;min-width:140px;">
-          <p><strong>Son Aigu 🔼</strong></p>
-          <button id="playHigh" type="button" class="jspsych-btn" style="background:#2563eb;">🔊 Écouter</button>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 28px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;min-width:140px;">
+          <span style="font-size:1em;font-weight:bold;color:#333;">Son Aigu</span>
+          <span style="font-size:2em;">🔼</span>
+          <button id="playHigh" type="button" class="jspsych-btn" style="background:#2563eb;font-size:0.95em;">🔊 Écouter</button>
         </div>
       </div>
+      <p style="color:#64748b;font-size:0.9em;">Vérifiez que le volume de votre ordinateur est suffisant. Quand vous êtes prêt·e, cliquez ci-dessous.</p>
     `,
     choices: ["Démarrer le test sonore"],
     on_load: function () {
@@ -218,21 +266,32 @@ if (!isComputer()) {
     }
   });
 
+  // Consigne simple avant la série
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+      <p><strong>Consigne pour le test sonore :</strong></p>
+      <p>Vous allez entendre 10 sons successifs : écoutez chaque son, puis indiquez s'il est grave ou aigu.</p>
+    `,
+    choices: ["Commencer les 10 écoutes"]
+  });
+
   const audioTestBlock = {
     timeline: [
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Cliquez pour jouer le son.</p>`,
+        stimulus: () => `<p>Son ${audioTestIndex + 1} /${AUDIO_TEST_TRIALS}</p><p>Cliquez pour jouer le son.</p>`,
         choices: ["🔊 Écouter le son"],
         on_finish: () => { playPitch(audioTestSequence[audioTestIndex] === 'high'); }
       },
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Ce son était-il <strong>grave</strong> ou <strong>aigu</strong> ?</p>`,
+        stimulus: () => `<p>Son ${audioTestIndex + 1} /${AUDIO_TEST_TRIALS}</p><p>Ce son était-il <strong>grave</strong> ou <strong>aigu</strong> ?</p>`,
         choices: ["Grave 🔽", "Aigu 🔼"],
         on_finish: function (data) {
           const responded = data.response === 0 ? 'low' : 'high';
-          if (responded === audioTestSequence[audioTestIndex]) audioTestCorrect++;
+          const correct = audioTestSequence[audioTestIndex];
+          if (responded === correct) audioTestCorrect++;
           audioTestIndex++;
         }
       }
@@ -246,225 +305,236 @@ if (!isComputer()) {
     stimulus: () => {
       audioTestPassed = audioTestCorrect >= AUDIO_TEST_THRESHOLD;
       return audioTestPassed
-        ? `<p>✅ <strong>Bravo !</strong> Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}.</p>`
-        : `<p>⚠️ <strong>Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}</strong>. Pensez à augmenter le volume sonore.</p>`;
+        ? `<p>✅ <strong>Bravo !</strong> Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}. Vous pouvez continuer.</p>`
+        : `<p>⚠️ <strong>Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}</strong>. Pensez à augmenter le volume sonore avant de continuer.</p>`;
     },
     choices: ["Continuer"]
   });
 
-  // 5. Moteur d'animation
-  function buildTrackingTrial(config) {
-    return {
-      type: jsPsychHtmlKeyboardResponse,
-      stimulus: `<canvas id="animationCanvas" width="800" height="600" style="width:800px;height:600px;border:1px solid #222;display:block;margin:auto;background-color:#525252;"></canvas>`,
-      choices: "NO_KEYS",
-      trial_duration: config.duration_ms,
-      on_load: function () {
-        const canvas = document.getElementById("animationCanvas");
-        const ctx = canvas.getContext("2d");
-        const baseR = BASE_RADIUS;
-        let rebTarget = 0, isRunning = false;
-
-        const shapes = [];
-        for (let j = 0; j < 4; j++) {
-          const fast = j >= 2;
-          const speed = fast ? 200 : 80;
-          const angle = Math.random() * 2 * Math.PI;
-          shapes.push({
-            x: canvas.width / 2 + (Math.random() - 0.5) * baseR * 2,
-            y: canvas.height / 2 + (Math.random() - 0.5) * baseR * 2,
-            dx: Math.cos(angle) * speed,
-            dy: Math.sin(angle) * speed,
-            radius: baseR,
-            group: fast ? 2 : 1,
-            pitch: Math.random() < 0.5 ? 'high' : 'low',
-            lastRebound: null
-          });
-        }
-
-        const unexpected = {
-          x: canvas.width + BASE_RADIUS + 5,
-          y: canvas.height / 2,
-          speed: unexpectedSpeed
-        };
-
-        function onRebound(shape, currentPitch) {
-          if (shape.group === 2 && currentPitch === 'high') rebTarget++;
-        }
-
-        let startTime = performance.now();
-        let lastFrame = startTime;
-
-        function update(dt, elapsed) {
-          shapes.forEach(s => {
-            s.x += s.dx * dt; s.y += s.dy * dt;
-            if (s.x - s.radius / 2 <= 0) {
-              s.x = s.radius / 2;
-              if (s.lastRebound !== "left") { s.dx *= -1; handleRebound(s, onRebound); s.lastRebound = "left"; }
-            } else if (s.x + s.radius / 2 >= canvas.width) {
-              s.x = canvas.width - s.radius / 2;
-              if (s.lastRebound !== "right") { s.dx *= -1; handleRebound(s, onRebound); s.lastRebound = "right"; }
-            } else { if (s.lastRebound === "left" || s.lastRebound === "right") s.lastRebound = null; }
-
-            if (s.y - s.radius / 2 <= 0) {
-              s.y = s.radius / 2;
-              if (s.lastRebound !== "top") { s.dy *= -1; handleRebound(s, onRebound); s.lastRebound = "top"; }
-            } else if (s.y + s.radius / 2 >= canvas.height) {
-              s.y = canvas.height - s.radius / 2;
-              if (s.lastRebound !== "bottom") { s.dy *= -1; handleRebound(s, onRebound); s.lastRebound = "bottom"; }
-            } else { if (s.lastRebound === "top" || s.lastRebound === "bottom") s.lastRebound = null; }
-          });
-
-          if (config.allowUS && hasUnexpected && elapsed > 10000) {
-            unexpected.x += unexpected.speed * dt;
-          }
-        }
-
-        function draw(elapsed) {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.fillStyle = "black";
-          shapes.forEach(s => {
-            ctx.beginPath(); ctx.arc(s.x, s.y, s.radius / 2, 0, Math.PI * 2);
-            ctx.fill();
-          });
-
-          if (config.allowUS && hasUnexpected && elapsed > 10000) {
-            let r = BASE_RADIUS / 2;
-            if (unexpectedSizeMode === 'pulsing') {
-              r = (BASE_RADIUS * (1 + PULSE_AMPLITUDE * Math.sin(2 * Math.PI * PULSE_FREQ * (elapsed / 1000)))) / 2;
-            }
-            ctx.fillStyle = unexpectedColor;
-            if (unexpectedShape === 'circle') {
-              ctx.beginPath(); ctx.arc(unexpected.x, unexpected.y, r, 0, Math.PI * 2); ctx.fill();
-            } else if (unexpectedShape === 'triangle') {
-              ctx.beginPath();
-              ctx.moveTo(unexpected.x, unexpected.y - r * 1.3);
-              ctx.lineTo(unexpected.x - r * 1.15, unexpected.y + r * 0.75);
-              ctx.lineTo(unexpected.x + r * 1.15, unexpected.y + r * 0.75);
-              ctx.closePath();
-              ctx.fill();
-            }
-          }
-
-          ctx.fillStyle = "black"; ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-          ctx.fillText("+", canvas.width / 2, canvas.height / 2);
-        }
-
-        function loop(now) {
-          if (!isRunning) return;
-          const dt = Math.min((now - lastFrame) / 1000, 0.05);
-          lastFrame = now;
-          const elapsed = now - startTime;
-          update(dt, elapsed);
-          draw(elapsed);
-          requestAnimationFrame(loop);
-        }
-
-        setTimeout(() => {
-          isRunning = true; startTime = performance.now(); lastFrame = startTime;
-          requestAnimationFrame(loop);
-        }, 500);
-
-        setTimeout(() => { isRunning = false; }, config.duration_ms - 500);
-
-        window._currentTrialRebounds = () => rebTarget;
-      },
-      on_finish: function (data) {
-        if (window._currentTrialRebounds) {
-          data.true_rebounds = window._currentTrialRebounds();
-          window._currentTrialRebounds = null;
-        }
-      }
-    };
-  }
-
-  // 6. Entraînement
+  // ─── 4. DÉMONSTRATION AVEC CANVA ET HALO DORÉ ──────────────────────────────
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
-      <p><strong>Consignes :</strong> Comptez les rebonds des disques <strong>rapides</strong> qui émettent un son <strong>aigu</strong>.</p>
-      <p>Vous commencez par 2 essais d'entraînement (20 s chacun).</p>
+      <p><strong>Consignes de la tâche</strong></p>
+      <p>4 disques vont se déplacer sur l'écran et rebondir contre les parois : 2 sont rapides et 2 sont lents.</p>
+      <p>Chaque fois qu'un disque heurte un bord, il émet un <strong>son</strong>, soit <strong>grave</strong>, soit <strong>aigu</strong> aléatoirement.</p>
+      <p><strong>Votre tâche : compter attentivement les rebonds des disques RAPIDES qui émettent un son AIGU,<br>
+      et indiquer le total à la fin de chaque essai.</strong></p>
+      <p>Les disques lents et les sons graves ne sont là que pour vous distraire !</p>
+      <p>Voici un aperçu : les 2 rapides clignotent <span style="color:red;">en rouge</span> et les 2 lents <span style="color:lightgreen;">en vert</span>.<br>
+      Un <span style="color:#FFD700;font-weight:bold;">halo doré</span> apparaît autour des disques rapides uniquement lorsqu'ils émettent un son aigu.</p>
+      <canvas id="welcomeCanvas" style="width:400px;height:300px;border:1px solid #222;display:block;margin:10px auto;"></canvas>
+
+      <div id="soundToggleBox" style="margin:14px auto 0;padding:10px 18px;border:1px solid #94a3b8;border-radius:8px;background:#f1f5f9;display:inline-block;text-align:center;cursor:pointer;user-select:none;">
+        <span id="soundToggleLabel" style="font-size:0.95em;color:#334155;">🔇 Activer le son de la démo</span>
+      </div>
     `,
-    choices: ["Démarrer l'entraînement"]
+    choices: ["J'ai compris"],
+    on_load: function () {
+      let soundEnabled = false;
+      const toggleBox = document.getElementById("soundToggleBox");
+      const toggleLabel = document.getElementById("soundToggleLabel");
+      toggleBox.addEventListener("click", () => {
+        soundEnabled = !soundEnabled;
+        toggleLabel.textContent = soundEnabled ? "🔊 Son activé (cliquez pour couper)" : "🔇 Activer le son de la démo";
+      });
+
+      const canvas = document.getElementById("welcomeCanvas");
+      const ctx = canvas.getContext("2d");
+      canvas.width = 400; canvas.height = 300;
+      canvas.style.backgroundColor = "#525252";
+      const baseR = 10;
+      const FLASH_DURATION = 400;
+      const shapes = [];
+      for (let j = 0; j < 4; j++) {
+        const fast = j >= 2;
+        const speed = fast ? 100 : 40;
+        const baseColor = fast ? "red" : "green";
+        const angle = Math.random() * 2 * Math.PI;
+        shapes.push({
+          x: canvas.width / 2 + (Math.random() - 0.5) * baseR * 2,
+          y: canvas.height / 2 + (Math.random() - 0.5) * baseR * 2,
+          dx: Math.cos(angle) * speed, dy: Math.sin(angle) * speed,
+          baseColor, color: baseColor, radius: baseR,
+          group: fast ? 2 : 1, lastRebound: null,
+          pitch: Math.random() < 0.5 ? 'high' : 'low',
+          flashUntil: 0
+        });
+      }
+      let isPaused = false, blinkState = true;
+      const blinkTimer = setInterval(() => {
+        if (isPaused) return;
+        blinkState = !blinkState;
+        shapes.forEach(s => { s.color = blinkState ? s.baseColor : "black"; });
+      }, 500);
+
+      function triggerFlash(s, pitch) {
+        if (s.group === 2 && pitch === 'high') s.flashUntil = performance.now() + FLASH_DURATION;
+      }
+
+      function update(dt) {
+        if (isPaused) return;
+        shapes.forEach(s => {
+          s.x += s.dx * dt; s.y += s.dy * dt;
+          if (s.x - s.radius / 2 <= 0) {
+            s.x = s.radius / 2;
+            if (s.lastRebound !== "left") { s.dx *= -1; const p = s.pitch; if (soundEnabled) handleRebound(s, null); triggerFlash(s, p); s.lastRebound = "left"; }
+          } else if (s.x + s.radius / 2 >= canvas.width) {
+            s.x = canvas.width - s.radius / 2;
+            if (s.lastRebound !== "right") { s.dx *= -1; const p = s.pitch; if (soundEnabled) handleRebound(s, null); triggerFlash(s, p); s.lastRebound = "right"; }
+          } else { if (s.lastRebound === "left" || s.lastRebound === "right") s.lastRebound = null; }
+
+          if (s.y - s.radius / 2 <= 0) {
+            s.y = s.radius / 2;
+            if (s.lastRebound !== "top") { s.dy *= -1; const p = s.pitch; if (soundEnabled) handleRebound(s, null); triggerFlash(s, p); s.lastRebound = "top"; }
+          } else if (s.y + s.radius / 2 >= canvas.height) {
+            s.y = canvas.height - s.radius / 2;
+            if (s.lastRebound !== "bottom") { s.dy *= -1; const p = s.pitch; if (soundEnabled) handleRebound(s, null); triggerFlash(s, p); s.lastRebound = "bottom"; }
+          } else { if (s.lastRebound === "top" || s.lastRebound === "bottom") s.lastRebound = null; }
+        });
+      }
+
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const now = performance.now();
+        shapes.forEach(s => {
+          if (s.group === 2 && now < s.flashUntil) {
+            const progress = 1 - (s.flashUntil - now) / FLASH_DURATION;
+            const ringRadius = s.radius / 2 + 4 + progress * 10;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, ringRadius, 0, 2 * Math.PI);
+            ctx.strokeStyle = `rgba(255,215,0,${1 - progress})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+          }
+          ctx.beginPath(); ctx.arc(s.x, s.y, s.radius / 2, 0, 2 * Math.PI);
+          ctx.fillStyle = s.color; ctx.fill();
+        });
+        ctx.fillStyle = "black"; ctx.font = "20px Arial"; ctx.textAlign = "center";
+        ctx.fillText("+", canvas.width / 2, canvas.height / 2);
+      }
+
+      let last = performance.now();
+      function animate() {
+        if (isPaused) return;
+        const now = performance.now(); const dt = (now - last) / 1000; last = now;
+        update(dt); draw(); requestAnimationFrame(animate);
+      }
+      animate();
+
+      document.querySelector(".jspsych-btn").addEventListener("click", () => {
+        isPaused = true;
+        clearInterval(blinkTimer);
+      });
+    }
   });
 
-  for (let trainIdx = 1; trainIdx <= 2; trainIdx++) {
-    timeline.push(buildTrackingTrial({ trial_number: `train_${trainIdx}`, is_training: true, allowUS: false, duration_ms: 20000 }));
-    timeline.push({
-      type: jsPsychSurveyText,
-      preamble: `<p>Combien de rebonds de disques rapides avec un son aigu avez-vous compté ?</p>`,
-      questions: [{ prompt: "Nombre :", required: true }],
-      button_label: "Valider",
-      on_finish: function (data) {
-        data.participant_rebound_count = parseInt(data.response.Q0, 10) || 0;
-      }
-    });
+  // ─── SVG HELPERS POUR QUESTIONS IB ─────────────────────────────────────────
+  function getShapeSVG(shapeType, size) {
+    const s = size || 90;
+    const cx = s / 2, cy = s / 2, r = s * 0.33;
+    const bg = "#525252";
+    if (shapeType === 'circle') {
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"/></svg>`;
+    }
+    if (shapeType === 'triangle') {
+      const h = r * 1.2;
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><polygon points="${cx},${cy - h} ${cx - h},${cy + h * 0.65} ${cx + h},${cy + h * 0.65}" fill="black"/></svg>`;
+    }
+    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
   }
 
-  // 7. Essais expérimentaux
-  timeline.push({
-    type: jsPsychHtmlButtonResponse,
-    stimulus: `<p>Passons aux essais réels (30 secondes chacun).</p>`,
-    choices: ["Démarrer"]
-  });
+  function getSizeSVG(sizeMode, size) {
+    const s = size || 90;
+    const cx = s / 2, cy = s / 2, r = s * 0.28;
+    const bg = "#525252";
+    if (sizeMode === 'fixed') {
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"/></svg>`;
+    }
+    if (sizeMode === 'pulsing') {
+      const rMin = r * 0.9, rMax = r * 1.1;
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${rMax}" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"><animate attributeName="r" values="${rMin};${rMax};${rMin}" dur="0.5s" repeatCount="indefinite"/></circle></svg>`;
+    }
+    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
+  }
 
-  for (let t = 1; t <= 5; t++) {
+  function appendIBQuestions(trialNumber) {
+    // 1. Détection dichotomique
+    timeline.push({
+      type: jsPsychSurveyMultiChoice,
+      questions: [{ prompt: "Avez-vous remarqué quelque chose d'inhabituel lors de cet essai ?", options: ["OUI", "NON"], required: true }],
+      data: { trial_number: trialNumber, question_type: "detection_ib" },
+      on_finish: function (data) { data.participant_response_ib = data.response.Q0; }
+    });
+
+    // 2. Confiance détection
+    timeline.push({
+      type: jsPsychHtmlSliderResponse,
+      stimulus: "Indiquez votre certitude quant à votre réponse OUI / NON :",
+      labels: ["Pas du tout certain·e", "Totalement certain·e"],
+      min: 0, max: 100, step: 1, slider_start: 50, require_movement: true,
+      data: { trial_number: trialNumber, question_type: "confidence_detection" },
+      on_finish: function (data) { data.confidence_detection = data.response; }
+    });
+
+    // 3. Forme
     timeline.push({
       type: jsPsychHtmlButtonResponse,
-      stimulus: `<p>${t < 5 ? "<strong>Prêt pour l'essai suivant ?</strong>" : "Observez simplement l'écran, <strong>plus besoin de compter.</strong>"}</p>`,
-      choices: ["Continuer"]
+      stimulus: `<p>Quelle était la <strong>forme</strong> de cet objet ?</p><div id="shape-options"></div>`,
+      choices: ["Valider"],
+      button_html: '<button class="jspsych-btn" disabled>%choice%</button>',
+      data: { trial_number: trialNumber, question_type: "shape" },
+      on_load: function () {
+        const btn = document.querySelector(".jspsych-btn");
+        const container = document.getElementById("shape-options");
+        const opts = [{ val: 'circle', lab: 'Rond' }, { val: 'triangle', lab: 'Triangle' }, { val: 'none', lab: 'Rien vu' }];
+        opts.forEach(opt => {
+          const w = document.createElement("div");
+          w.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;";
+          w.innerHTML = `${getShapeSVG(opt.val, 90)}<span style="font-size:0.85em;margin-top:4px;">${opt.lab}</span>`;
+          w.onclick = () => {
+            Array.from(container.children).forEach(d => { d.style.borderColor = "transparent"; d.style.backgroundColor = "transparent"; });
+            w.style.borderColor = "#2ecc71"; w.style.backgroundColor = "rgba(46, 204, 113, 0.2)";
+            btn.disabled = false;
+            window._selectedShape = opt.val;
+          };
+          container.appendChild(w);
+        });
+      },
+      on_finish: function (data) {
+        data.participant_response_shape = window._selectedShape || null;
+        window._selectedShape = null;
+      }
     });
 
-    timeline.push(buildTrackingTrial({ trial_number: t, is_training: false, allowUS: (t >= 3), duration_ms: 30000 }));
+    // 4. Confiance forme
+    timeline.push({
+      type: jsPsychHtmlSliderResponse,
+      stimulus: "Indiquez votre niveau de certitude quant à la <strong>forme</strong> choisie :",
+      labels: ["Faible certitude", "Totale certitude"],
+      min: 0, max: 100, step: 1, slider_start: 50, require_movement: true,
+      data: { trial_number: trialNumber, question_type: "confidence_shape" },
+      on_finish: function (data) { data.confidence_shape = data.response; }
+    });
 
-    if (t < 5) {
-      timeline.push({
-        type: jsPsychSurveyText,
-        preamble: `<p>Combien de rebonds avez-vous compté ?</p>`,
-        questions: [{ prompt: "Nombre :", required: true }],
-        button_label: "Valider",
-        on_finish: function (data) {
-          data.participant_rebound_count = parseInt(data.response.Q0, 10) || 0;
-        }
-      });
-    }
-
-    if (t >= 3) {
-      timeline.push({
-        type: jsPsychSurveyMultiChoice,
-        questions: [{ prompt: "Avez-vous remarqué quelque chose d'inhabituel sur cet essai ?", options: ["OUI", "NON"], required: true }],
-        on_finish: function (data) { data.participant_response_ib = data.response.Q0; }
-      });
-    }
-  }
-
-  // 8. Sauvegarde Firebase
-  timeline.push({
-    type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<div style="max-width:600px;margin:auto;text-align:center;padding-top:40px;">
-      <h2>Merci pour votre participation !</h2>
-      <p id="save-status">Enregistrement des données en cours...</p>
-    </div>`,
-    choices: "NO_KEYS",
-    trial_duration: 3000,
-    on_load: function () {
-      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-      const experimentData = jsPsych.data.get().values();
-      if (db) {
-        db.ref("experiment_data/" + subject_id).set(experimentData)
-          .then(() => {
-            document.getElementById("save-status").innerHTML = "✅ Enregistré ! Redirection...";
-            setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 1500);
-          })
-          .catch(() => {
-            setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 1500);
-          });
-      } else {
-        setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 1500);
-      }
-    }
-  });
-
-  // Lancement direct
-  jsPsych.run(timeline);
-}
+    // 5. Couleur
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `<p>De quelle <strong>couleur</strong> était cet objet ?</p><div id="color-options"></div>`,
+      choices: ["Valider"],
+      button_html: '<button class="jspsych-btn" disabled>%choice%</button>',
+      data: { trial_number: trialNumber, question_type: "color" },
+      on_load: function () {
+        const btn = document.querySelector(".jspsych-btn");
+        const container = document.getElementById("color-options");
+        const cols = [
+          { val: 'black', lab: 'Noir', hex: '#000000' },
+          { val: 'red', lab: 'Rouge', hex: '#cc0000' },
+          { val: 'none', lab: 'Rien vu', hex: null }
+        ];
+        cols.forEach(c => {
+          const w = document.createElement("div");
+          w.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;";
+          const swatch = c.hex ? `<div style="width:60px;height:60px;border-radius:8px;background:${c.hex};border:1px solid #444;"></div>`
+                               : `<div style="width:60px;height:60px;border-radius:8px;background:#888;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#222;">X</div>`;
+          w.innerHTML = `${swatch}<span style="font-size:0.85em;margin-top:4px
