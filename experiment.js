@@ -1,4 +1,4 @@
-// ─── INITIALISATION FIREBASE (NOUVELLE DATABASE AUDIO-8FF24) ───────────────
+// ─── INITIALISATION FIREBASE (DATABASE AUDIO-8FF24) ─────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyCrwPKIYzh6UYcsVOcsGo1AKy8q4MD2rMY",
   authDomain: "audio-8ff24.firebaseapp.com",
@@ -14,7 +14,7 @@ if (!firebase.apps.length) {
 }
 const db = firebase.database();
 
-// Identifiant participant unique et anonyme : horodatage + chaîne aléatoire
+// Identifiant sujet unique et anonyme
 const subject_id = "sub_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7);
 
 // ─── DÉTECTION MOBILE ROBUSTE (COMPATIBLE PC PORTABLES TACTILES) ────────────
@@ -151,7 +151,7 @@ if (!isComputer()) {
   }
   requestAnimationFrame(estimateRefreshRate);
 
-  // ─── 0. CONSENTEMENT ÉCLAIRÉ ───────────────────────────────────────────────
+  // ─── 0. CONSENTEMENT LIBRE ET ÉCLAIRÉ ───────────────────────────────────────
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -280,4 +280,77 @@ if (!isComputer()) {
         <div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 28px;border:1px solid #cbd5e1;border-radius:10px;background:#f8fafc;min-width:140px;">
           <span style="font-size:1em;font-weight:bold;color:#333;">Son Aigu</span>
           <span style="font-size:2em;">🔼</span>
-          <button id="play
+          <button id="playHigh" type="button" class="jspsych-btn" style="background:#2563eb;font-size:0.95em;">🔊 Écouter</button>
+        </div>
+      </div>
+      <p style="color:#64748b;font-size:0.9em;">Vérifiez que le volume de votre ordinateur est suffisant. Quand vous êtes prêt·e, cliquez ci-dessous.</p>
+    `,
+    choices: ["Démarrer le test sonore"],
+    data: { phase: "audio_familiarization", speedcondition },
+    on_load: function () {
+      document.getElementById("playLow").addEventListener("click", (e) => { e.stopPropagation(); playPitch(false); });
+      document.getElementById("playHigh").addEventListener("click", (e) => { e.stopPropagation(); playPitch(true); });
+    },
+    on_finish: function () {
+      audioTestCorrect = 0; audioTestIndex = 0;
+      audioTestSequence = generateAudioTestSequence();
+    }
+  });
+
+  const audioTestBlock = {
+    timeline: [
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: function () {
+          const isRetry = audioTestSequence.length > 0;
+          return `
+            <p><strong>${isRetry ? "Nouveau test auditif" : "Test auditif"}</strong></p>
+            <p>Vous allez entendre <strong>${AUDIO_TEST_TRIALS} sons</strong> consécutifs.<br>
+            Pour chaque son, cliquez sur <strong>Écouter le son</strong>, puis indiquez s'il est <strong>grave 🔽</strong> ou <strong>aigu 🔼</strong>.</p>
+            ${isRetry ? `<p style="color:#e11d48;">Ajustez votre volume si besoin avant de commencer.</p>` : ""}
+          `;
+        },
+        choices: ["C'est parti !"],
+        data: { phase: "audio_test_intro", speedcondition },
+        on_finish: function () {
+          audioTestCorrect = 0; audioTestIndex = 0;
+          audioTestSequence = generateAudioTestSequence();
+        }
+      },
+      {
+        timeline: [
+          {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: function () {
+              return `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Cliquez pour jouer le son.</p>`;
+            },
+            choices: ["🔊 Écouter le son"],
+            data: { phase: "audio_test_play", speedcondition },
+            on_finish: function () {
+              playPitch(audioTestSequence[audioTestIndex] === 'high');
+            }
+          },
+          {
+            type: jsPsychHtmlButtonResponse,
+            stimulus: function () {
+              return `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Ce son était-il <strong>grave</strong> ou <strong>aigu</strong> ?</p>`;
+            },
+            choices: ["Grave 🔽", "Aigu 🔼"],
+            data: { phase: "audio_test_response", speedcondition },
+            on_finish: function (data) {
+              const responded = data.response === 0 ? 'low' : 'high';
+              const correct = audioTestSequence[audioTestIndex];
+              data.audio_test_response = responded;
+              data.audio_test_correct_pitch = correct;
+              data.audio_test_is_correct = (responded === correct);
+              if (data.audio_test_is_correct) audioTestCorrect++;
+              audioTestIndex++;
+            }
+          }
+        ],
+        loop_function: function () { return audioTestIndex < AUDIO_TEST_TRIALS; }
+      },
+      {
+        type: jsPsychHtmlButtonResponse,
+        stimulus: function () {
+          if (audioTestCorrect >= AUDIO_TEST
