@@ -1,4 +1,4 @@
-// ─── INITIALISATION FIREBASE (DATABASE AUDIO-8FF24) ─────────────────────────
+// ─── INITIALISATION FIREBASE (AUDIO-8FF24) ──────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyCrwPKIYzh6UYcsVOcsGo1AKy8q4MD2rMY",
   authDomain: "audio-8ff24.firebaseapp.com",
@@ -46,7 +46,9 @@ if (!isComputer()) {
 
   const timeline = [];
 
-  // Conditions expérimentales
+  // Indicateur bot global
+  let botFlag = false;
+
   const speedcondition = Math.random() < 0.5 ? "slow" : "fast";
   const unexpectedSpeed = speedcondition === "slow" ? -80 : -200;
 
@@ -120,7 +122,7 @@ if (!isComputer()) {
     shape.pitch = Math.random() < 0.5 ? 'high' : 'low';
   }
 
-  // ─── 0. NOTICE D'INFORMATION ET DE CONSENTEMENT COMPLÈTE ──────────────────
+  // ─── 0. NOTICE DE CONSENTEMENT COMPLÈTE ────────────────────────────────────
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -193,27 +195,48 @@ if (!isComputer()) {
   timeline.push({
     type: jsPsychFullscreen,
     fullscreen_mode: true,
-    message: `<div style="max-width:650px;margin:auto;text-align:center;line-height:1.6;">
-      <p><strong>Bienvenue dans cette étude !</strong></p>
-      <p>Pour la validité des mesures, merci de vous installer confortablement à <strong>environ une longueur de bras de votre écran</strong> (50 à 60 cm) et d'activer le son de votre ordinateur.</p>
-      <p>L'expérience va démarrer en plein écran.</p>
-    </div>`,
+    message: `
+      <div style="max-width:650px;margin:auto;text-align:center;line-height:1.6;">
+        <p><strong>Bienvenue dans cette étude !</strong></p>
+        <p>Pour la validité des mesures, merci de vous installer confortablement à <strong>environ une longueur de bras de votre écran</strong> (50 à 60 cm) et d'activer le son de votre ordinateur.</p>
+        <p>L'expérience va démarrer en plein écran.</p>
+      </div>
+    `,
     button_label: "Passer en plein écran"
   });
 
-  // ─── 2. DÉMOGRAPHIE (ALIGNÉE VERTICALEMENT) ─────────────────────────────────
+  // ─── 2. DÉMOGRAPHIE & HONEYPOT ANTI-BOT ─────────────────────────────────────
   timeline.push({
     type: jsPsychSurveyMultiChoice,
-    questions: [{ prompt: "Quel est votre sexe ?", options: ["Homme", "Femme", "Non-binaire", "Autre", "Préfère ne pas répondre"], required: true }],
+    questions: [
+      { prompt: "Quel est votre sexe ?", options: ["Homme", "Femme", "Non-binaire", "Autre", "Préfère ne pas répondre"], required: true },
+      { prompt: "Quelle est votre tranche d'âge ?", options: ["Moins de 18 ans", "18-25 ans", "26-35 ans", "36-50 ans", "51 ans et plus"], required: true }
+    ],
+    preamble: `
+      <div style="opacity: 0; position: absolute; top: 0; left: -9999px; height: 0; width: 0; z-index: -1; overflow: hidden;" aria-hidden="true">
+        <label for="user_contact_confirmation">Veuillez laisser ce champ vide si vous êtes un humain :</label>
+        <input type="text" id="user_contact_confirmation" name="user_contact_confirmation" tabindex="-1" autocomplete="off">
+      </div>
+    `,
     button_label: "Valider",
-    on_finish: function (data) { data.participant_sex = data.response.Q0; }
-  });
+    on_finish: function (data) {
+      data.participant_sex = data.response.Q0;
+      data.participant_age = data.response.Q1;
 
-  timeline.push({
-    type: jsPsychSurveyMultiChoice,
-    questions: [{ prompt: "Quelle est votre tranche d'âge ?", options: ["Moins de 18 ans", "18-25 ans", "26-35 ans", "36-50 ans", "51 ans et plus"], required: true }],
-    button_label: "Valider",
-    on_finish: function (data) { data.participant_age = data.response.Q0; }
+      // Détection honeypot
+      const honeypotInput = document.getElementById("user_contact_confirmation");
+      const honeypotVal = honeypotInput ? honeypotInput.value : "";
+      if (honeypotVal && honeypotVal.trim() !== "") {
+        botFlag = true;
+      }
+
+      // Détection vitesse anormale (< 1200 ms)
+      if (data.rt && data.rt < 1200) {
+        botFlag = true;
+      }
+
+      jsPsych.data.addProperties({ is_bot_detected: botFlag });
+    }
   });
 
   // ─── 3. TEST AUDITIF ────────────────────────────────────────────────────────
@@ -234,7 +257,6 @@ if (!isComputer()) {
     return seq;
   }
 
-  // Écran de familiarisation : deux boutons bleus identiques
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -266,7 +288,6 @@ if (!isComputer()) {
     }
   });
 
-  // Consigne simple avant la série
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -306,12 +327,12 @@ if (!isComputer()) {
       audioTestPassed = audioTestCorrect >= AUDIO_TEST_THRESHOLD;
       return audioTestPassed
         ? `<p>✅ <strong>Bravo !</strong> Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}. Vous pouvez continuer.</p>`
-        : `<p>⚠️ <strong>Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}</strong>. Pensez à augmenter le volume sonore avant de continuer.</p>`;
+        : `<p>⚠️️ <strong>Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}</strong>. Pensez à augmenter le volume sonore avant de continuer.</p>`;
     },
     choices: ["Continuer"]
   });
 
-  // ─── 4. DÉMONSTRATION AVEC CANVA ET HALO DORÉ ──────────────────────────────
+  // ─── 4. DÉMONSTRATION AVEC HALO DORÉ ───────────────────────────────────────
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -334,12 +355,15 @@ if (!isComputer()) {
       let soundEnabled = false;
       const toggleBox = document.getElementById("soundToggleBox");
       const toggleLabel = document.getElementById("soundToggleLabel");
-      toggleBox.addEventListener("click", () => {
-        soundEnabled = !soundEnabled;
-        toggleLabel.textContent = soundEnabled ? "🔊 Son activé (cliquez pour couper)" : "🔇 Activer le son de la démo";
-      });
+      if (toggleBox) {
+        toggleBox.addEventListener("click", () => {
+          soundEnabled = !soundEnabled;
+          toggleLabel.textContent = soundEnabled ? "🔊 Son activé (cliquez pour couper)" : "🔇 Activer le son de la démo";
+        });
+      }
 
       const canvas = document.getElementById("welcomeCanvas");
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
       canvas.width = 400; canvas.height = 300;
       canvas.style.backgroundColor = "#525252";
@@ -422,10 +446,13 @@ if (!isComputer()) {
       }
       animate();
 
-      document.querySelector(".jspsych-btn").addEventListener("click", () => {
-        isPaused = true;
-        clearInterval(blinkTimer);
-      });
+      const proceedBtn = document.querySelector(".jspsych-btn");
+      if (proceedBtn) {
+        proceedBtn.addEventListener("click", () => {
+          isPaused = true;
+          clearInterval(blinkTimer);
+        });
+      }
     }
   });
 
@@ -453,13 +480,12 @@ if (!isComputer()) {
     }
     if (sizeMode === 'pulsing') {
       const rMin = r * 0.9, rMax = r * 1.1;
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${rMax}" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"><animate attributeName="r" values="${rMin};${rMax};${rMin}" dur="0.5s" repeatCount="indefinite"/></circle></svg>`;
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${rMax}" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"><animate attributeName="r" values="${rMin};${rMax};${rMin}" dur="0.5s" repeatCount="indefinite"/></circle></svg>`;
     }
     return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
   }
 
   function appendIBQuestions(trialNumber) {
-    // 1. Détection dichotomique
     timeline.push({
       type: jsPsychSurveyMultiChoice,
       questions: [{ prompt: "Avez-vous remarqué quelque chose d'inhabituel lors de cet essai ?", options: ["OUI", "NON"], required: true }],
@@ -467,7 +493,6 @@ if (!isComputer()) {
       on_finish: function (data) { data.participant_response_ib = data.response.Q0; }
     });
 
-    // 2. Confiance détection
     timeline.push({
       type: jsPsychHtmlSliderResponse,
       stimulus: "Indiquez votre certitude quant à votre réponse OUI / NON :",
@@ -477,7 +502,6 @@ if (!isComputer()) {
       on_finish: function (data) { data.confidence_detection = data.response; }
     });
 
-    // 3. Forme
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: `<p>Quelle était la <strong>forme</strong> de cet objet ?</p><div id="shape-options"></div>`,
@@ -507,7 +531,6 @@ if (!isComputer()) {
       }
     });
 
-    // 4. Confiance forme
     timeline.push({
       type: jsPsychHtmlSliderResponse,
       stimulus: "Indiquez votre niveau de certitude quant à la <strong>forme</strong> choisie :",
@@ -517,7 +540,6 @@ if (!isComputer()) {
       on_finish: function (data) { data.confidence_shape = data.response; }
     });
 
-    // 5. Couleur
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: `<p>De quelle <strong>couleur</strong> était cet objet ?</p><div id="color-options"></div>`,
@@ -553,7 +575,6 @@ if (!isComputer()) {
       }
     });
 
-    // 6. Confiance couleur
     timeline.push({
       type: jsPsychHtmlSliderResponse,
       stimulus: "Indiquez votre certitude quant à la <strong>couleur</strong> choisie :",
@@ -563,7 +584,6 @@ if (!isComputer()) {
       on_finish: function (data) { data.confidence_color = data.response; }
     });
 
-    // 7. Taille
     timeline.push({
       type: jsPsychHtmlButtonResponse,
       stimulus: `<p>Comment était la <strong>taille</strong> de cet objet ?</p><div id="size-options"></div>`,
@@ -597,7 +617,6 @@ if (!isComputer()) {
       }
     });
 
-    // 8. Confiance taille
     timeline.push({
       type: jsPsychHtmlSliderResponse,
       stimulus: "Indiquez votre certitude quant à la <strong>taille</strong> choisie :",
@@ -683,7 +702,8 @@ if (!isComputer()) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.fillStyle = "black";
           shapes.forEach(s => {
-            ctx.beginPath(); ctx.arc(s.x, s.y, s.radius / 2, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.radius / 2, 0, Math.PI * 2);
+            ctx.fill();
           });
 
           if (config.allowUS && hasUnexpected && elapsed > 10000) {
@@ -814,7 +834,7 @@ if (!isComputer()) {
     }
   }
 
-  // ─── 9. CONNAISSANCE DU PARADIGME & DÉBRIEFING ──────────────────────────────
+  // ─── 9. CONNAISSANCE DU PARADIGME ───────────────────────────────────────────
   timeline.push({
     type: jsPsychSurveyMultiChoice,
     questions: [{ prompt: "Connaissiez-vous déjà ce type d'expérience (ex. le gorille invisible) ?", options: ["Oui", "Non"], required: true }],
@@ -822,26 +842,36 @@ if (!isComputer()) {
     on_finish: function (data) { data.participant_prior_knowledge = data.response.Q0; }
   });
 
-  // ─── 10. SAUVEGARDE FIREBASE & FIN ──────────────────────────────────────────
+  // ─── 10. SAUVEGARDE FIREBASE & EXPORT INTERACTIONS ──────────────────────────
   timeline.push({
     type: jsPsychHtmlKeyboardResponse,
-    stimulus: `<div style="max-width:600px;margin:auto;text-align:center;padding-top:40px;">
-      <h2>Merci pour votre participation !</h2>
-      <p id="save-status">Enregistrement des données sur le serveur, veuillez patienter...</p>
-    </div>`,
+    stimulus: `
+      <div style="max-width:600px;margin:auto;text-align:center;padding-top:40px;">
+        <h2>Merci pour votre participation !</h2>
+        <p id="save-status">Enregistrement des données sur le serveur, veuillez patienter...</p>
+      </div>
+    `,
     choices: "NO_KEYS",
     trial_duration: 3000,
     on_load: function () {
       if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-      const experimentData = jsPsych.data.get().values();
+
+      const payload = {
+        subject_id: subject_id,
+        is_bot_flag: botFlag,
+        trials: jsPsych.data.get().values(),
+        interactions: jsPsych.data.getInteractionData().values()
+      };
+
       if (db) {
-        db.ref("experiment_data/" + subject_id).set(experimentData)
+        db.ref("experiment_data/" + subject_id).set(payload)
           .then(() => {
             const el = document.getElementById("save-status");
             if (el) el.innerHTML = "✅ Données enregistrées ! Redirection en cours...";
             setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 1500);
           })
-          .catch(() => {
+          .catch((err) => {
+            console.error("Erreur Firebase :", err);
             setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 2000);
           });
       } else {
@@ -850,6 +880,6 @@ if (!isComputer()) {
     }
   });
 
-  // Lancement
+  // ─── LANCEMENT ──────────────────────────────────────────────────────────────
   jsPsych.run(timeline);
 }
