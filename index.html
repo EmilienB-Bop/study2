@@ -41,17 +41,26 @@
     .jspsych-content p, .jspsych-content h1, .jspsych-content h2, .jspsych-content span, .jspsych-content label {
       color: #0f172a !important;
     }
-    .jspsych-survey-multi-choice-question, .jspsych-survey-text-question {
+
+    /* Alignement vertical et centré des options radio (sexe, âge) */
+    .jspsych-survey-multi-choice-question {
+      text-align: left;
+      display: inline-block;
       margin-bottom: 2em;
     }
     .jspsych-survey-multi-choice-option {
-      display: inline-block;
-      margin: 0 10px;
+      display: block !important;
+      margin: 10px 0 !important;
+      text-align: left;
     }
     .jspsych-survey-multi-choice-text, .jspsych-survey-multi-choice-option label {
       color: #0f172a !important;
       cursor: pointer;
+      font-size: 1rem;
+      margin-left: 8px;
     }
+
+    /* Champs de saisie numérique */
     input[type="text"], input[type="number"] {
       background-color: #f8fafc !important;
       color: #0f172a !important;
@@ -61,12 +70,22 @@
       font-size: 1rem;
       text-align: center;
     }
+
+    /* Sliders de certitude */
+    .jspsych-slider {
+      background-color: #cbd5e1 !important;
+    }
+    .jspsych-html-slider-response-container p {
+      color: #0f172a !important;
+    }
+
+    /* Boutons standards */
     .jspsych-btn {
       color: #ffffff !important;
       background-color: #2563eb;
       border: 1px solid #1d4ed8;
       border-radius: 6px;
-      padding: 10px 20px;
+      padding: 10px 22px;
       font-weight: 600;
       cursor: pointer;
     }
@@ -77,10 +96,14 @@
       color: #e2e8f0 !important;
       cursor: not-allowed;
     }
+
+    /* Grilles de sélection pour l'objet inattendu */
     #shape-options, #color-options, #size-options {
       display: flex;
       justify-content: center;
       gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 14px;
     }
   </style>
 </head>
