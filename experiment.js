@@ -373,18 +373,7 @@ if (!isComputer()) {
 
   timeline.push(audioTestBlock);
 
-  timeline.push({
-    type: jsPsychHtmlButtonResponse,
-    stimulus: () => {
-      audioTestPassed = audioTestCorrect >= AUDIO_TEST_THRESHOLD;
-      return audioTestPassed
-        ? `<p>✅ <strong>Bravo !</strong> Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}. Vous pouvez continuer.</p>`
-        : `<p>⚠️️ <strong>Score : ${audioTestCorrect}/${AUDIO_TEST_TRIALS}</strong>. Pensez à augmenter le volume sonore avant de continuer.</p>`;
-    },
-    choices: ["Continuer"]
-  });
-
-  // ─── 4. DÉMONSTRATION AVEC HALO DORÉ ───────────────────────────────────────
+   // ─── 4. DÉMONSTRATION AVEC HALO DORÉ ───────────────────────────────────────
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
