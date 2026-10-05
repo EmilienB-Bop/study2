@@ -280,13 +280,13 @@ if (!isComputer()) {
     timeline: [
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<p>Son ${audioTestIndex + 1} /${AUDIO_TEST_TRIALS}</p><p>Cliquez pour jouer le son.</p>`,
+        stimulus: () => `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Cliquez pour jouer le son.</p>`,
         choices: ["🔊 Écouter le son"],
         on_finish: () => { playPitch(audioTestSequence[audioTestIndex] === 'high'); }
       },
       {
         type: jsPsychHtmlButtonResponse,
-        stimulus: () => `<p>Son ${audioTestIndex + 1} /${AUDIO_TEST_TRIALS}</p><p>Ce son était-il <strong>grave</strong> ou <strong>aigu</strong> ?</p>`,
+        stimulus: () => `<p>Son ${audioTestIndex + 1} / ${AUDIO_TEST_TRIALS}</p><p>Ce son était-il <strong>grave</strong> ou <strong>aigu</strong> ?</p>`,
         choices: ["Grave 🔽", "Aigu 🔼"],
         on_finish: function (data) {
           const responded = data.response === 0 ? 'low' : 'high';
@@ -435,13 +435,13 @@ if (!isComputer()) {
     const cx = s / 2, cy = s / 2, r = s * 0.33;
     const bg = "#525252";
     if (shapeType === 'circle') {
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"/></svg>`;
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"/></svg>`;
     }
     if (shapeType === 'triangle') {
       const h = r * 1.2;
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><polygon points="${cx},${cy - h} ${cx - h},${cy + h * 0.65} ${cx + h},${cy + h * 0.65}" fill="black"/></svg>`;
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><polygon points="${cx},${cy - h} ${cx - h},${cy + h * 0.65} ${cx + h},${cy + h * 0.65}" fill="black"/></svg>`;
     }
-    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
   }
 
   function getSizeSVG(sizeMode, size) {
@@ -449,13 +449,13 @@ if (!isComputer()) {
     const cx = s / 2, cy = s / 2, r = s * 0.28;
     const bg = "#525252";
     if (sizeMode === 'fixed') {
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"/></svg>`;
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"/></svg>`;
     }
     if (sizeMode === 'pulsing') {
       const rMin = r * 0.9, rMax = r * 1.1;
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${rMax}" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"><animate attributeName="r" values="${rMin};${rMax};${rMin}" dur="0.5s" repeatCount="indefinite"/></circle></svg>`;
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${rMax}" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"><animate attributeName="r" values="${rMin};${rMax};${rMin}" dur="0.5s" repeatCount="indefinite"/></circle></svg>`;
     }
-    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s}${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
   }
 
   function appendIBQuestions(trialNumber) {
@@ -537,4 +537,319 @@ if (!isComputer()) {
           w.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;";
           const swatch = c.hex ? `<div style="width:60px;height:60px;border-radius:8px;background:${c.hex};border:1px solid #444;"></div>`
                                : `<div style="width:60px;height:60px;border-radius:8px;background:#888;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#222;">X</div>`;
-          w.innerHTML = `${swatch}<span style="font-size:0.85em;margin-top:4px
+          w.innerHTML = `${swatch}<span style="font-size:0.85em;margin-top:4px;">${c.lab}</span>`;
+          w.onclick = () => {
+            Array.from(container.children).forEach(d => { d.style.borderColor = "transparent"; d.style.backgroundColor = "transparent"; });
+            w.style.borderColor = "#2ecc71"; w.style.backgroundColor = "rgba(46, 204, 113, 0.2)";
+            btn.disabled = false;
+            window._selectedColor = c.val;
+          };
+          container.appendChild(w);
+        });
+      },
+      on_finish: function (data) {
+        data.participant_response_color = window._selectedColor || null;
+        window._selectedColor = null;
+      }
+    });
+
+    // 6. Confiance couleur
+    timeline.push({
+      type: jsPsychHtmlSliderResponse,
+      stimulus: "Indiquez votre certitude quant à la <strong>couleur</strong> choisie :",
+      labels: ["Faible certitude", "Totale certitude"],
+      min: 0, max: 100, step: 1, slider_start: 50, require_movement: true,
+      data: { trial_number: trialNumber, question_type: "confidence_color" },
+      on_finish: function (data) { data.confidence_color = data.response; }
+    });
+
+    // 7. Taille
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `<p>Comment était la <strong>taille</strong> de cet objet ?</p><div id="size-options"></div>`,
+      choices: ["Valider"],
+      button_html: '<button class="jspsych-btn" disabled>%choice%</button>',
+      data: { trial_number: trialNumber, question_type: "size" },
+      on_load: function () {
+        const btn = document.querySelector(".jspsych-btn");
+        const container = document.getElementById("size-options");
+        const sizes = [
+          { val: 'fixed', lab: 'Taille fixe' },
+          { val: 'pulsing', lab: 'Taille variable' },
+          { val: 'none', lab: 'Rien vu' }
+        ];
+        sizes.forEach(s => {
+          const w = document.createElement("div");
+          w.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;";
+          w.innerHTML = `${getSizeSVG(s.val, 90)}<span style="font-size:0.85em;margin-top:4px;">${s.lab}</span>`;
+          w.onclick = () => {
+            Array.from(container.children).forEach(d => { d.style.borderColor = "transparent"; d.style.backgroundColor = "transparent"; });
+            w.style.borderColor = "#2ecc71"; w.style.backgroundColor = "rgba(46, 204, 113, 0.2)";
+            btn.disabled = false;
+            window._selectedSize = s.val;
+          };
+          container.appendChild(w);
+        });
+      },
+      on_finish: function (data) {
+        data.participant_response_size = window._selectedSize || null;
+        window._selectedSize = null;
+      }
+    });
+
+    // 8. Confiance taille
+    timeline.push({
+      type: jsPsychHtmlSliderResponse,
+      stimulus: "Indiquez votre certitude quant à la <strong>taille</strong> choisie :",
+      labels: ["Faible certitude", "Totale certitude"],
+      min: 0, max: 100, step: 1, slider_start: 50, require_movement: true,
+      data: { trial_number: trialNumber, question_type: "confidence_size" },
+      on_finish: function (data) { data.confidence_size = data.response; }
+    });
+  }
+
+  // ─── 5. MOTEUR D'ANIMATION UNIFIÉ ───────────────────────────────────────────
+  function buildTrackingTrial(config) {
+    return {
+      type: jsPsychHtmlKeyboardResponse,
+      stimulus: `<canvas id="animationCanvas" width="800" height="600" style="width:800px;height:600px;border:1px solid #222;display:block;margin:auto;background-color:#525252;"></canvas>`,
+      choices: "NO_KEYS",
+      trial_duration: config.duration_ms,
+      data: { trial_number: config.trial_number, is_training: config.is_training || false },
+      on_load: function () {
+        const canvas = document.getElementById("animationCanvas");
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        const baseR = BASE_RADIUS;
+        let rebTarget = 0, isRunning = false;
+
+        const shapes = [];
+        for (let j = 0; j < 4; j++) {
+          const fast = j >= 2;
+          const speed = fast ? 200 : 80;
+          const angle = Math.random() * 2 * Math.PI;
+          shapes.push({
+            x: canvas.width / 2 + (Math.random() - 0.5) * baseR * 2,
+            y: canvas.height / 2 + (Math.random() - 0.5) * baseR * 2,
+            dx: Math.cos(angle) * speed,
+            dy: Math.sin(angle) * speed,
+            radius: baseR,
+            color: "black",
+            group: fast ? 2 : 1,
+            pitch: Math.random() < 0.5 ? 'high' : 'low',
+            lastRebound: null
+          });
+        }
+
+        const unexpected = {
+          x: canvas.width + BASE_RADIUS + 5,
+          y: canvas.height / 2,
+          speed: unexpectedSpeed
+        };
+
+        function onRebound(shape, currentPitch) {
+          if (shape.group === 2 && currentPitch === 'high') rebTarget++;
+        }
+
+        let startTime = performance.now();
+        let lastFrame = startTime;
+
+        function update(dt, elapsed) {
+          shapes.forEach(s => {
+            s.x += s.dx * dt; s.y += s.dy * dt;
+            if (s.x - s.radius / 2 <= 0) {
+              s.x = s.radius / 2;
+              if (s.lastRebound !== "left") { s.dx *= -1; handleRebound(s, onRebound); s.lastRebound = "left"; }
+            } else if (s.x + s.radius / 2 >= canvas.width) {
+              s.x = canvas.width - s.radius / 2;
+              if (s.lastRebound !== "right") { s.dx *= -1; handleRebound(s, onRebound); s.lastRebound = "right"; }
+            } else { if (s.lastRebound === "left" || s.lastRebound === "right") s.lastRebound = null; }
+
+            if (s.y - s.radius / 2 <= 0) {
+              s.y = s.radius / 2;
+              if (s.lastRebound !== "top") { s.dy *= -1; handleRebound(s, onRebound); s.lastRebound = "top"; }
+            } else if (s.y + s.radius / 2 >= canvas.height) {
+              s.y = canvas.height - s.radius / 2;
+              if (s.lastRebound !== "bottom") { s.dy *= -1; handleRebound(s, onRebound); s.lastRebound = "bottom"; }
+            } else { if (s.lastRebound === "top" || s.lastRebound === "bottom") s.lastRebound = null; }
+          });
+
+          if (config.allowUS && hasUnexpected && elapsed > 10000) {
+            unexpected.x += unexpected.speed * dt;
+          }
+        }
+
+        function draw(elapsed) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = "black";
+          shapes.forEach(s => {
+            ctx.beginPath(); ctx.arc(s.x, s.y, s.radius / 2, 0, Math.PI * 2); ctx.fill();
+          });
+
+          if (config.allowUS && hasUnexpected && elapsed > 10000) {
+            let r = BASE_RADIUS / 2;
+            if (unexpectedSizeMode === 'pulsing') {
+              r = (BASE_RADIUS * (1 + PULSE_AMPLITUDE * Math.sin(2 * Math.PI * PULSE_FREQ * (elapsed / 1000)))) / 2;
+            }
+            ctx.fillStyle = unexpectedColor;
+            if (unexpectedShape === 'circle') {
+              ctx.beginPath(); ctx.arc(unexpected.x, unexpected.y, r, 0, Math.PI * 2); ctx.fill();
+            } else if (unexpectedShape === 'triangle') {
+              ctx.beginPath();
+              ctx.moveTo(unexpected.x, unexpected.y - r * 1.3);
+              ctx.lineTo(unexpected.x - r * 1.15, unexpected.y + r * 0.75);
+              ctx.lineTo(unexpected.x + r * 1.15, unexpected.y + r * 0.75);
+              ctx.closePath();
+              ctx.fill();
+            }
+          }
+
+          ctx.fillStyle = "black"; ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+          ctx.fillText("+", canvas.width / 2, canvas.height / 2);
+        }
+
+        function loop(now) {
+          if (!isRunning) return;
+          const dt = Math.min((now - lastFrame) / 1000, 0.05);
+          lastFrame = now;
+          const elapsed = now - startTime;
+          update(dt, elapsed);
+          draw(elapsed);
+          requestAnimationFrame(loop);
+        }
+
+        setTimeout(() => {
+          isRunning = true; startTime = performance.now(); lastFrame = startTime;
+          requestAnimationFrame(loop);
+        }, 500);
+
+        setTimeout(() => { isRunning = false; }, config.duration_ms - 500);
+
+        window._currentTrialRebounds = () => rebTarget;
+      },
+      on_finish: function (data) {
+        if (window._currentTrialRebounds) {
+          data.true_rebounds = window._currentTrialRebounds();
+          window._currentTrialRebounds = null;
+        }
+      }
+    };
+  }
+
+  // ─── 6. ENTRAÎNEMENT AVEC INTRO ET FEEDBACK ─────────────────────────────────
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+      <p>Avant les essais réels, vous allez effectuer <strong>2 essais d'entraînement</strong> (20 secondes chacun).</p>
+      <p>Les couleurs et le halo ne seront plus là pour vous aider.</p>
+      <p>Comptez les rebonds des disques <strong>rapides</strong> qui émettent un son <strong>aigu</strong>.</p>
+    `,
+    choices: ["Démarrer l'entraînement"]
+  });
+
+  for (let trainIdx = 1; trainIdx <= 2; trainIdx++) {
+    timeline.push(buildTrackingTrial({ trial_number: `train_${trainIdx}`, is_training: true, allowUS: false, duration_ms: 20000 }));
+
+    timeline.push({
+      type: jsPsychSurveyText,
+      preamble: `<p>Combien de rebonds de disques <strong>rapides</strong> avec un son <strong>aigu</strong> avez-vous compté ?</p>`,
+      questions: [{ prompt: "Nombre de rebonds :", required: true }],
+      button_label: "Valider",
+      on_finish: function (data) {
+        const lastTrial = jsPsych.data.get().filter({ is_training: true }).last(1).values()[0];
+        const trueCount = lastTrial ? lastTrial.true_rebounds : 0;
+        const rep = parseInt(data.response.Q0, 10) || 0;
+        const precision = trueCount > 0 ? Math.max(0, 100 - (Math.abs(trueCount - rep) / trueCount) * 100) : (rep === 0 ? 100 : 0);
+        data.participant_rebound_count = rep;
+        data.true_rebounds = trueCount;
+        data.precision = Math.round(precision);
+        data.feedback_text = `Votre précision : <strong>${data.precision}%</strong> (Vous : ${rep}, Réel : ${trueCount}).`;
+      }
+    });
+
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: function () { return `<p>${jsPsych.data.get().last(1).values()[0].feedback_text}</p>`; },
+      choices: ["Continuer"]
+    });
+  }
+
+  // ─── 7. TRANSITION VERS LES ESSAIS RÉELS ────────────────────────────────────
+  timeline.push({
+    type: jsPsychHtmlButtonResponse,
+    stimulus: `
+      <p>L'entraînement est terminé. Les essais suivants dureront <strong>30 secondes</strong>.</p>
+      <p>Comme lors de l'entraînement, comptez les rebonds des disques <strong>rapides</strong> produisant un son <strong>aigu</strong>.</p>
+      <p>Répondez avec précision et le plus rapidement possible à la fin de chaque essai.</p>
+    `,
+    choices: ["Prêt !"]
+  });
+
+  // ─── 8. LES 5 ESSAIS EXPÉRIMENTAUX ──────────────────────────────────────────
+  for (let t = 1; t <= 5; t++) {
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `<p>${t < 5 ? "<strong>Prêt pour l'essai suivant ?</strong>" : "Consigne modifiée : Observez simplement l'écran, <strong>plus besoin de compter les rebonds.</strong>"}</p>`,
+      choices: ["Continuer"]
+    });
+
+    const hasUSTrial = (t >= 3);
+    timeline.push(buildTrackingTrial({ trial_number: t, is_training: false, allowUS: hasUSTrial, duration_ms: 30000 }));
+
+    if (t < 5) {
+      timeline.push({
+        type: jsPsychSurveyText,
+        preamble: `<p>Combien de rebonds avez-vous compté ?</p>`,
+        questions: [{ prompt: "Nombre de rebonds :", required: true }],
+        button_label: "Valider",
+        data: { trial_number: t, question_type: "rebound_count" },
+        on_finish: function (data) {
+          data.participant_rebound_count = parseInt(data.response.Q0, 10) || 0;
+        }
+      });
+    }
+
+    if (t >= 3) {
+      appendIBQuestions(t);
+    }
+  }
+
+  // ─── 9. CONNAISSANCE DU PARADIGME & DÉBRIEFING ──────────────────────────────
+  timeline.push({
+    type: jsPsychSurveyMultiChoice,
+    questions: [{ prompt: "Connaissiez-vous déjà ce type d'expérience (ex. le gorille invisible) ?", options: ["Oui", "Non"], required: true }],
+    button_label: "Terminer",
+    on_finish: function (data) { data.participant_prior_knowledge = data.response.Q0; }
+  });
+
+  // ─── 10. SAUVEGARDE FIREBASE & FIN ──────────────────────────────────────────
+  timeline.push({
+    type: jsPsychHtmlKeyboardResponse,
+    stimulus: `<div style="max-width:600px;margin:auto;text-align:center;padding-top:40px;">
+      <h2>Merci pour votre participation !</h2>
+      <p id="save-status">Enregistrement des données sur le serveur, veuillez patienter...</p>
+    </div>`,
+    choices: "NO_KEYS",
+    trial_duration: 3000,
+    on_load: function () {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      const experimentData = jsPsych.data.get().values();
+      if (db) {
+        db.ref("experiment_data/" + subject_id).set(experimentData)
+          .then(() => {
+            const el = document.getElementById("save-status");
+            if (el) el.innerHTML = "✅ Données enregistrées ! Redirection en cours...";
+            setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 1500);
+          })
+          .catch(() => {
+            setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 2000);
+          });
+      } else {
+        setTimeout(() => { window.location.href = "https://www.univ-tlse2.fr/"; }, 1500);
+      }
+    }
+  });
+
+  // Lancement
+  jsPsych.run(timeline);
+}
