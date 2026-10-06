@@ -151,8 +151,7 @@ if (!isComputer()) {
         <p><strong>Vos droits à la confidentialité et au respect de la vie privée :</strong><br>
         Cette étude est strictement anonyme, c'est-à-dire que les données collectées ne permettront pas de vous identifier, même indirectement, de quelque manière que ce soit.<br>
         1. Les données obtenues seront traitées avec la plus entière confidentialité.<br>
-        2. Aucun renseignement ne sera dévoilé qui puisse révéler votre identité.<br>
-        3. Les données seront conservées dans un endroit sécurisé (seul le responsable de l'étude y aura accès).</p>
+        2. Aucun renseignement ne sera dévoilé qui puisse révéler votre identité.</p>
 
         <p><strong>Bénéfices :</strong><br>
         • <em>Bénéfices en termes d’avancées scientifiques :</em> L’étude va permettre d’apporter un éclairage sur les paramètres du stimulus déterminants dans le taux de capture attentionnelle.<br>
