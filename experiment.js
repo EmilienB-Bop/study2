@@ -49,44 +49,89 @@ if (!isComputer()) {
   // Indicateur bot global
   let botFlag = false;
 
-  const speedcondition = Math.random() < 0.5 ? "slow" : "fast";
-  const unexpectedSpeed = speedcondition === "slow" ? -80 : -200;
+  // ─── PLAN FACTORIEL DES CONDITIONS DE STIMULUS INATTENDU ────────────────────
+  // 1) Condition "pure" sans stimulus inattendu (aucun croisement)
+  // 2) Conditions avec stimulus inattendu :
+  //    - vitesse : 'slow' (-80 px/s) vs 'fast' (-200 px/s)
+  //    - pulsation visuelle + auditive : 3 Hz vs 6 Hz
+  //    - fréquence sonore : 330 Hz vs 660 Hz
+  //    - forme ('circle'/'triangle') x couleur ('black'/'red')
+  const BASE_RADIUS     = 20;
+  const PULSE_AMPLITUDE = 0.10;
+  const SPEED_VALUES_PX = { slow: -80, fast: -200 };
+  const PULSE_FREQS_HZ  = [3, 6];
+  const AUDIO_FREQS_HZ  = [330, 660];
 
-  const allVariants = [
-    { id: 'none',                   hasUnexpected: false, shape: 'circle',   color: 'black', size: 'fixed'   },
-    { id: 'circle_black_fixed',     hasUnexpected: true,  shape: 'circle',   color: 'black', size: 'fixed'   },
-    { id: 'circle_black_pulsing',   hasUnexpected: true,  shape: 'circle',   color: 'black', size: 'pulsing' },
-    { id: 'circle_red_fixed',       hasUnexpected: true,  shape: 'circle',   color: 'red',   size: 'fixed'   },
-    { id: 'circle_red_pulsing',     hasUnexpected: true,  shape: 'circle',   color: 'red',   size: 'pulsing' },
-    { id: 'triangle_black_fixed',   hasUnexpected: true,  shape: 'triangle', color: 'black', size: 'fixed'   },
-    { id: 'triangle_black_pulsing', hasUnexpected: true,  shape: 'triangle', color: 'black', size: 'pulsing' },
-    { id: 'triangle_red_fixed',     hasUnexpected: true,  shape: 'triangle', color: 'red',   size: 'fixed'   },
-    { id: 'triangle_red_pulsing',   hasUnexpected: true,  shape: 'triangle', color: 'red',   size: 'pulsing' },
-  ];
+  function buildConditionPool() {
+    const pool = [
+      {
+        id: 'pure_none',
+        hasUnexpected: false,
+        shape: null,
+        color: null,
+        sizeMode: 'none',
+        usSpeedCond: null,
+        usSpeedPx: 0,
+        pulseHz: null,
+        audioHz: null
+      }
+    ];
 
-  const selectedVariantObj = jsPsych.randomization.sampleWithoutReplacement(allVariants, 1)[0];
-  const selectedVariant    = selectedVariantObj.id;
-  const hasUnexpected      = selectedVariantObj.hasUnexpected;
-  const unexpectedShape    = selectedVariantObj.shape;
-  const unexpectedColor    = selectedVariantObj.color;
-  const unexpectedSizeMode = selectedVariantObj.size;
+    const shapes = ['circle', 'triangle'];
+    const colors = ['black', 'red'];
+    const speedConds = ['slow', 'fast'];
 
-  const BASE_RADIUS      = 20;
-  const PULSE_AMPLITUDE  = 0.10;
-  const PULSE_FREQ       = 2;
+    for (const usSpeedCond of speedConds) {
+      for (const pulseHz of PULSE_FREQS_HZ) {
+        for (const audioHz of AUDIO_FREQS_HZ) {
+          for (const shape of shapes) {
+            for (const color of colors) {
+              pool.push({
+                id: `us_${usSpeedCond}_pulse${pulseHz}hz_freq${audioHz}hz_${shape}_${color}`,
+                hasUnexpected: true,
+                shape: shape,
+                color: color,
+                sizeMode: 'pulsing',
+                usSpeedCond: usSpeedCond,
+                usSpeedPx: SPEED_VALUES_PX[usSpeedCond],
+                pulseHz: pulseHz,
+                audioHz: audioHz
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return pool;
+  }
+
+  const allConditions = buildConditionPool();
+  const selectedCond = jsPsych.randomization.sampleWithoutReplacement(allConditions, 1)[0];
+
+  const hasUnexpected      = selectedCond.hasUnexpected;
+  const unexpectedShape    = selectedCond.shape;
+  const unexpectedColor    = selectedCond.color;
+  const unexpectedSizeMode = selectedCond.sizeMode;
+  const usSpeedCond        = selectedCond.usSpeedCond;
+  const unexpectedSpeed    = selectedCond.usSpeedPx;
+  const pulseHz            = selectedCond.pulseHz;
+  const usAudioHz          = selectedCond.audioHz;
 
   jsPsych.data.addProperties({
     subject_id: subject_id,
-    variant: selectedVariant,
+    condition_id: selectedCond.id,
+    has_unexpected: hasUnexpected,
     us_shape: unexpectedShape,
     us_color: unexpectedColor,
     us_size_mode: unexpectedSizeMode,
-    has_unexpected: hasUnexpected,
-    speedcondition: speedcondition,
-    unexpected_speed_px: unexpectedSpeed
+    us_speed_cond: usSpeedCond,
+    unexpected_speed_px: unexpectedSpeed,
+    us_pulse_hz: pulseHz,
+    us_audio_hz: usAudioHz
   });
 
-  // Moteur audio
+  // ─── MOTEUR AUDIO ───────────────────────────────────────────────────────────
   let audioCtx = null;
   function getAudioCtx() {
     if (!audioCtx) {
@@ -99,24 +144,56 @@ if (!isComputer()) {
   document.addEventListener('click', () => { getAudioCtx(); });
 
   function playPitch(isHigh) {
-  try {
-    for (let i = 1; i <= 4; i++) { // choix du nombre d'harmoniques
-    const ctx = getAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = isHigh ? 660*i : 330*i;
-    const gainValue = isHigh ? 1 / Math.pow(2,i) : 1 / Math.pow(2,i); // décroissance de 6dB des harmoniques 
-    gain.gain.setValueAtTime(0, ctx.currentTime); // on commence à 0
-    gain.gain.linearRampToValueAtTime(gainValue, ctx.currentTime + 0.002); // attaque 2 ms
-    gain.gain.exponentialRampToValueAtTime(0.000001, ctx.currentTime + 0.6); // décroissance expo de 600 ms
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.6);
-    }
-  } catch (e) { /* audio unavailable: continue silently */ }
-}
+    try {
+      for (let i = 1; i <= 4; i++) { // choix du nombre d'harmoniques
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = isHigh ? 660 * i : 330 * i;
+        const gainValue = isHigh ? 1 / Math.pow(2, i) : 1 / Math.pow(2, i); // décroissance de 6dB des harmoniques 
+        gain.gain.setValueAtTime(0, ctx.currentTime); // on commence à 0
+        gain.gain.linearRampToValueAtTime(gainValue, ctx.currentTime + 0.002); // attaque 2 ms
+        gain.gain.exponentialRampToValueAtTime(0.000001, ctx.currentTime + 0.6); // décroissance expo de 600 ms
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.6);
+      }
+    } catch (e) { /* audio unavailable: continue silently */ }
+  }
+
+  function playUnexpectedPulseTone() {
+    if (!hasUnexpected || !usAudioHz || !pulseHz) return;
+    try {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const totalDur = 0.65;
+      const period = 1 / pulseHz;
+      const steps = Math.max(2, Math.floor(totalDur / (period / 2)));
+      const stepDur = totalDur / steps;
+
+      for (let i = 1; i <= 4; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(usAudioHz * i, now);
+        const peakGain = 1 / Math.pow(2, i);
+        gain.gain.setValueAtTime(0.0001, now);
+        for (let s = 0; s < steps; s++) {
+          const tStep = now + s * stepDur;
+          const envFactor = (s % 2 === 0) ? 1.0 : 0.15;
+          gain.gain.linearRampToValueAtTime(Math.max(0.0001, peakGain * envFactor), tStep + Math.min(0.005, stepDur * 0.25));
+        }
+        gain.gain.exponentialRampToValueAtTime(0.000001, now + totalDur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + totalDur + 0.01);
+      }
+    } catch (e) { /* audio unavailable: continue silently */ }
+  }
 
   function handleRebound(shape, onRebound) {
     const currentPitch = shape.pitch;
@@ -148,18 +225,18 @@ if (!isComputer()) {
         Si vous acceptez de participer à cette étude, vous êtes invité·e à répondre à quelques questions puis à compter le nombre de rebonds de formes qu’on vous aura préalablement décrites contre les bords de l’écran. Vous aurez 5 essais de 30 secondes pendant lesquels des formes se déplaceront sur l’écran en rebondissant contre les bords. On vous demandera de compter les rebonds d’un groupe précis de ces objets. L’expérience dure en tout 15 minutes (en incluant la lecture du présent consentement et le débriefing).</p>
 
         <p><strong>Vos droits de vous retirer de la recherche en tout temps :</strong><br>
-        1. Votre contribution à cette recherche est volontaire ;<br>
-        2. Vous pouvez cesser votre participation à tout moment, et cela n’aura aucune conséquence. Cependant, lorsque votre participation sera terminée, il ne sera plus possible de la retirer. En effet, la stricte confidentialité de cette étude rend impossible la rectification ou la suppression des informations vous concernant, vu que nous ne pourrons pas identifier votre réponse parmi les réponses reçues.</p>
+1. Votre contribution à cette recherche est volontaire ;<br>
+2. Vous pouvez cesser votre participation à tout moment, et cela n’aura aucune conséquence. Cependant, lorsque votre participation sera terminée, il ne sera plus possible de la retirer. En effet, la stricte confidentialité de cette étude rend impossible la rectification ou la suppression des informations vous concernant, vu que nous ne pourrons pas identifier votre réponse parmi les réponses reçues.</p>
 
         <p><strong>Vos droits à la confidentialité et au respect de la vie privée :</strong><br>
         Cette étude est strictement anonyme, c'est-à-dire que les données collectées ne permettront pas de vous identifier, même indirectement, de quelque manière que ce soit.<br>
-        1. Les données obtenues seront traitées avec la plus entière confidentialité.<br>
-        2. Aucun renseignement ne sera dévoilé qui puisse révéler votre identité.</p>
+1. Les données obtenues seront traitées avec la plus entière confidentialité.<br>
+2. Aucun renseignement ne sera dévoilé qui puisse révéler votre identité.</p>
 
         <p><strong>Bénéfices :</strong><br>
-        • <em>Bénéfices en termes d’avancées scientifiques :</em> L’étude va permettre d’apporter un éclairage sur les paramètres du stimulus déterminants dans le taux de capture attentionnelle.<br>
-        • <em>Bénéfices pour la société :</em> La détermination des paramètres du stimulus impactant le taux de capture attentionnelle a d’importants bénéfices possibles dans tous les domaines complexes où l’attention est sollicitée et des événements complexes sont susceptibles de se produire. C’est le cas dans l’aviation, dans la conduite automobile par exemple.<br>
-        • <em>Bénéfices pour le participant :</em> La satisfaction profonde de participer à l’avancée de la science.</p>
+- <em>Bénéfices en termes d’avancées scientifiques :</em> L’étude va permettre d’apporter un éclairage sur les paramètres du stimulus déterminants dans le taux de capture attentionnelle.<br>
+- <em>Bénéfices pour la société :</em> La détermination des paramètres du stimulus impactant le taux de capture attentionnelle a d’importants bénéfices possibles dans tous les domaines complexes où l’attention est sollicitée et des événements complexes sont susceptibles de se produire. C’est le cas dans l’aviation, dans la conduite automobile par exemple.<br>
+- <em>Bénéfices pour le participant :</em> La satisfaction profonde de participer à l’avancée de la science.</p>
 
         <p><strong>Risques possibles :</strong><br>
         À notre connaissance, cette recherche n’implique aucun risque ou inconfort autre que ceux de la vie quotidienne.</p>
@@ -225,14 +302,12 @@ if (!isComputer()) {
       data.participant_sex = data.response.Q0;
       data.participant_age = data.response.Q1;
 
-      // Détection honeypot
       const honeypotInput = document.getElementById("user_contact_confirmation");
       const honeypotVal = honeypotInput ? honeypotInput.value : "";
       if (honeypotVal && honeypotVal.trim() !== "") {
         botFlag = true;
       }
 
-      // Détection vitesse anormale (< 1200 ms)
       if (data.rt && data.rt < 1200) {
         botFlag = true;
       }
@@ -299,9 +374,8 @@ if (!isComputer()) {
     choices: ["Commencer les 10 écoutes"]
   });
 
- const audioTestBlock = {
+  const audioTestBlock = {
     timeline: [
-      // 1. La série des 10 sons
       {
         timeline: [
           {
@@ -324,7 +398,6 @@ if (!isComputer()) {
         ],
         loop_function: () => audioTestIndex < AUDIO_TEST_TRIALS
       },
-      // 2. Écran de résultat avec boucle de rattrapage
       {
         type: jsPsychHtmlButtonResponse,
         stimulus: function () {
@@ -355,12 +428,11 @@ if (!isComputer()) {
             ? ["Continuer vers l'expérience"]
             : ["Recommencer le test sonore"];
         },
-        data: { phase: "audio_test_result", speedcondition },
+        data: { phase: "audio_test_result", condition_id: selectedCond.id },
         on_finish: function (data) {
           data.audio_test_score = audioTestCorrect;
           data.audio_test_passed = audioTestCorrect >= AUDIO_TEST_THRESHOLD;
           audioTestPassed = audioTestCorrect >= AUDIO_TEST_THRESHOLD;
-          // Si échec, on réinitialise les compteurs pour le nouvel essai
           if (!audioTestPassed) {
             audioTestCorrect = 0;
             audioTestIndex = 0;
@@ -369,13 +441,12 @@ if (!isComputer()) {
         }
       }
     ],
-    // Répète tout le bloc tant que le score est inférieur à 8/10
     loop_function: () => !audioTestPassed
   };
 
   timeline.push(audioTestBlock);
 
-   // ─── 4. DÉMONSTRATION AVEC HALO DORÉ ───────────────────────────────────────
+  // ─── 4. DÉMONSTRATION AVEC HALO DORÉ ───────────────────────────────────────
   timeline.push({
     type: jsPsychHtmlButtonResponse,
     stimulus: `
@@ -499,31 +570,83 @@ if (!isComputer()) {
     }
   });
 
-  // ─── SVG HELPERS POUR QUESTIONS IB ─────────────────────────────────────────
-  function getShapeSVG(shapeType, size) {
+  // ─── SVG HELPERS POUR QUESTIONS IB (VITESSE / PULSE / PITCH) ──────────────
+  function getSpeedSVG(speedVal, size) {
     const s = size || 90;
-    const cx = s / 2, cy = s / 2, r = s * 0.33;
+    const cx = s / 2, cy = s / 2, r = s * 0.22;
     const bg = "#525252";
-    if (shapeType === 'circle') {
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"/></svg>`;
+    if (speedVal === 'slow') {
+      return `
+        <svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+          <rect width="${s}" height="${s}" fill="${bg}" rx="6"/>
+          <circle cx="${cx + 8}" cy="${cy}" r="${r}" fill="#e2e8f0"/>
+          <line x1="${cx - 6}" y1="${cy}" x2="${cx - 24}" y2="${cy}" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round"/>
+          <polyline points="${cx - 19},${cy - 5} ${cx - 25},${cy} ${cx - 19},${cy + 5}" fill="none" stroke="#e2e8f0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
     }
-    if (shapeType === 'triangle') {
-      const h = r * 1.2;
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><polygon points="${cx},${cy - h} ${cx - h},${cy + h * 0.65} ${cx + h},${cy + h * 0.65}" fill="black"/></svg>`;
+    if (speedVal === 'fast') {
+      return `
+        <svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+          <rect width="${s}" height="${s}" fill="${bg}" rx="6"/>
+          <circle cx="${cx + 12}" cy="${cy}" r="${r}" fill="#e2e8f0"/>
+          <line x1="${cx + 2}" y1="${cy - 8}" x2="${cx - 28}" y2="${cy - 8}" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
+          <polyline points="${cx - 22},${cy - 13} ${cx - 29},${cy - 8} ${cx - 22},${cy - 3}" fill="none" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="${cx + 2}" y1="${cy + 8}" x2="${cx - 28}" y2="${cy + 8}" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round"/>
+          <polyline points="${cx - 22},${cy + 3} ${cx - 29},${cy + 8} ${cx - 22},${cy + 13}" fill="none" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
     }
     return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
   }
 
-  function getSizeSVG(sizeMode, size) {
+  function getPulseSVG(pulseVal, size) {
     const s = size || 90;
-    const cx = s / 2, cy = s / 2, r = s * 0.28;
+    const cx = s / 2, cy = s / 2;
     const bg = "#525252";
-    if (sizeMode === 'fixed') {
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"/></svg>`;
+    if (pulseVal === '3hz' || pulseVal === '6hz') {
+      const cycles = pulseVal === '6hz' ? 4 : 2;
+      let d = `M 12 ${cy}`;
+      const usableW = s - 24;
+      const segs = cycles * 4;
+      const stepX = usableW / segs;
+      const amp = s * 0.20;
+      for (let i = 1; i <= segs; i++) {
+        const x = 12 + i * stepX;
+        const y = (i % 2 === 1) ? (cy - amp) : (cy + amp);
+        d += ` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+      }
+      return `
+        <svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+          <rect width="${s}" height="${s}" fill="${bg}" rx="6"/>
+          <path d="${d}" fill="none" stroke="#f8fafc" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      `;
     }
-    if (sizeMode === 'pulsing') {
-      const rMin = r * 0.9, rMax = r * 1.1;
-      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><circle cx="${cx}" cy="${rMax}" fill="none" stroke="black" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.5"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="black"><animate attributeName="r" values="${rMin};${rMax};${rMin}" dur="0.5s" repeatCount="indefinite"/></circle></svg>`;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
+  }
+
+  function getPitchSVG(pitchVal, size) {
+    const s = size || 90;
+    const cx = s / 2, cy = s / 2;
+    const bg = "#525252";
+    if (pitchVal === '330hz') {
+      return `
+        <svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+          <rect width="${s}" height="${s}" fill="${bg}" rx="6"/>
+          <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="#f8fafc" font-size="16" font-weight="bold">330 Hz</text>
+          <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="#cbd5e1" font-size="12">Grave</text>
+        </svg>
+      `;
+    }
+    if (pitchVal === '660hz') {
+      return `
+        <svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+          <rect width="${s}" height="${s}" fill="${bg}" rx="6"/>
+          <text x="${cx}" y="${cy - 4}" text-anchor="middle" fill="#f8fafc" font-size="16" font-weight="bold">660 Hz</text>
+          <text x="${cx}" y="${cy + 16}" text-anchor="middle" fill="#cbd5e1" font-size="12">Aigu</text>
+        </svg>
+      `;
     }
     return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}"><rect width="${s}" height="${s}" fill="${bg}" rx="6"/><line x1="14" y1="14" x2="${s-14}" y2="${s-14}" stroke="#aaa" stroke-width="3"/><line x1="${s-14}" y1="14" x2="14" y2="${s-14}" stroke="#aaa" stroke-width="3"/><text x="${cx}" y="${s - 10}" text-anchor="middle" fill="#aaa" font-size="11">Rien vu</text></svg>`;
   }
@@ -545,128 +668,146 @@ if (!isComputer()) {
       on_finish: function (data) { data.confidence_detection = data.response; }
     });
 
+    // 1. VITESSE (slow / fast / none)
     timeline.push({
       type: jsPsychHtmlButtonResponse,
-      stimulus: `<p>Quelle était la <strong>forme</strong> de cet objet ?</p><div id="shape-options"></div>`,
+      stimulus: `<p>Quelle était la <strong>vitesse</strong> de cet objet ?</p><div id="speed-options" style="display:flex;gap:16px;justify-content:center;"></div>`,
       choices: ["Valider"],
       button_html: '<button class="jspsych-btn" disabled>%choice%</button>',
-      data: { trial_number: trialNumber, question_type: "shape" },
+      data: { trial_number: trialNumber, question_type: "speed" },
       on_load: function () {
         const btn = document.querySelector(".jspsych-btn");
-        const container = document.getElementById("shape-options");
-        const opts = [{ val: 'circle', lab: 'Rond' }, { val: 'triangle', lab: 'Triangle' }, { val: 'none', lab: 'Rien vu' }];
+        const container = document.getElementById("speed-options");
+        const opts = [
+          { val: 'slow', lab: 'Lent' },
+          { val: 'fast', lab: 'Rapide' },
+          { val: 'none', lab: 'Rien vu' }
+        ];
         opts.forEach(opt => {
           const w = document.createElement("div");
           w.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;";
-          w.innerHTML = `${getShapeSVG(opt.val, 90)}<span style="font-size:0.85em;margin-top:4px;">${opt.lab}</span>`;
+          w.innerHTML = `${getSpeedSVG(opt.val, 90)}<span style="font-size:0.85em;margin-top:4px;">${opt.lab}</span>`;
           w.onclick = () => {
             Array.from(container.children).forEach(d => { d.style.borderColor = "transparent"; d.style.backgroundColor = "transparent"; });
             w.style.borderColor = "#2ecc71"; w.style.backgroundColor = "rgba(46, 204, 113, 0.2)";
             btn.disabled = false;
-            window._selectedShape = opt.val;
+            window._selectedSpeed = opt.val;
           };
           container.appendChild(w);
         });
       },
       on_finish: function (data) {
-        data.participant_response_shape = window._selectedShape || null;
-        window._selectedShape = null;
+        data.participant_response_speed = window._selectedSpeed || null;
+        window._selectedSpeed = null;
       }
     });
 
     timeline.push({
       type: jsPsychHtmlSliderResponse,
-      stimulus: "Indiquez votre niveau de certitude quant à la <strong>forme</strong> choisie :",
+      stimulus: "Indiquez votre niveau de certitude quant à la <strong>vitesse</strong> choisie :",
       labels: ["Faible certitude", "Totale certitude"],
       min: 0, max: 100, step: 1, slider_start: 50, require_movement: true,
-      data: { trial_number: trialNumber, question_type: "confidence_shape" },
-      on_finish: function (data) { data.confidence_shape = data.response; }
+      data: { trial_number: trialNumber, question_type: "confidence_speed" },
+      on_finish: function (data) { data.confidence_speed = data.response; }
     });
 
+    // 2. PULSE (3hz / 6hz / none)
     timeline.push({
       type: jsPsychHtmlButtonResponse,
-      stimulus: `<p>De quelle <strong>couleur</strong> était cet objet ?</p><div id="color-options"></div>`,
+      stimulus: `<p>À quelle fréquence <strong>pulsait</strong> cet objet (en taille et en son) ?</p><div id="pulse-options" style="display:flex;gap:16px;justify-content:center;"></div>`,
       choices: ["Valider"],
       button_html: '<button class="jspsych-btn" disabled>%choice%</button>',
-      data: { trial_number: trialNumber, question_type: "color" },
+      data: { trial_number: trialNumber, question_type: "pulse" },
       on_load: function () {
         const btn = document.querySelector(".jspsych-btn");
-        const container = document.getElementById("color-options");
-        const cols = [
-          { val: 'black', lab: 'Noir', hex: '#000000' },
-          { val: 'red', lab: 'Rouge', hex: '#cc0000' },
-          { val: 'none', lab: 'Rien vu', hex: null }
-        ];
-        cols.forEach(c => {
-          const w = document.createElement("div");
-          w.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;";
-          const swatch = c.hex ? `<div style="width:60px;height:60px;border-radius:8px;background:${c.hex};border:1px solid #444;"></div>`
-                               : `<div style="width:60px;height:60px;border-radius:8px;background:#888;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#222;">X</div>`;
-          w.innerHTML = `${swatch}<span style="font-size:0.85em;margin-top:4px;">${c.lab}</span>`;
-          w.onclick = () => {
-            Array.from(container.children).forEach(d => { d.style.borderColor = "transparent"; d.style.backgroundColor = "transparent"; });
-            w.style.borderColor = "#2ecc71"; w.style.backgroundColor = "rgba(46, 204, 113, 0.2)";
-            btn.disabled = false;
-            window._selectedColor = c.val;
-          };
-          container.appendChild(w);
-        });
-      },
-      on_finish: function (data) {
-        data.participant_response_color = window._selectedColor || null;
-        window._selectedColor = null;
-      }
-    });
-
-    timeline.push({
-      type: jsPsychHtmlSliderResponse,
-      stimulus: "Indiquez votre certitude quant à la <strong>couleur</strong> choisie :",
-      labels: ["Faible certitude", "Totale certitude"],
-      min: 0, max: 100, step: 1, slider_start: 50, require_movement: true,
-      data: { trial_number: trialNumber, question_type: "confidence_color" },
-      on_finish: function (data) { data.confidence_color = data.response; }
-    });
-
-    timeline.push({
-      type: jsPsychHtmlButtonResponse,
-      stimulus: `<p>Comment était la <strong>taille</strong> de cet objet ?</p><div id="size-options"></div>`,
-      choices: ["Valider"],
-      button_html: '<button class="jspsych-btn" disabled>%choice%</button>',
-      data: { trial_number: trialNumber, question_type: "size" },
-      on_load: function () {
-        const btn = document.querySelector(".jspsych-btn");
-        const container = document.getElementById("size-options");
-        const sizes = [
-          { val: 'fixed', lab: 'Taille fixe' },
-          { val: 'pulsing', lab: 'Taille variable' },
+        const container = document.getElementById("pulse-options");
+        const opts = [
+          { val: '3hz', lab: '3 Hz' },
+          { val: '6hz', lab: '6 Hz' },
           { val: 'none', lab: 'Rien vu' }
         ];
-        sizes.forEach(s => {
+        opts.forEach(opt => {
           const w = document.createElement("div");
           w.style.cssText = "display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;";
-          w.innerHTML = `${getSizeSVG(s.val, 90)}<span style="font-size:0.85em;margin-top:4px;">${s.lab}</span>`;
+          w.innerHTML = `${getPulseSVG(opt.val, 90)}<span style="font-size:0.85em;margin-top:4px;">${opt.lab}</span>`;
           w.onclick = () => {
             Array.from(container.children).forEach(d => { d.style.borderColor = "transparent"; d.style.backgroundColor = "transparent"; });
             w.style.borderColor = "#2ecc71"; w.style.backgroundColor = "rgba(46, 204, 113, 0.2)";
             btn.disabled = false;
-            window._selectedSize = s.val;
+            window._selectedPulse = opt.val;
           };
           container.appendChild(w);
         });
       },
       on_finish: function (data) {
-        data.participant_response_size = window._selectedSize || null;
-        window._selectedSize = null;
+        data.participant_response_pulse = window._selectedPulse || null;
+        window._selectedPulse = null;
       }
     });
 
     timeline.push({
       type: jsPsychHtmlSliderResponse,
-      stimulus: "Indiquez votre certitude quant à la <strong>taille</strong> choisie :",
+      stimulus: "Indiquez votre niveau de certitude quant au <strong>pulse</strong> choisi :",
       labels: ["Faible certitude", "Totale certitude"],
       min: 0, max: 100, step: 1, slider_start: 50, require_movement: true,
-      data: { trial_number: trialNumber, question_type: "confidence_size" },
-      on_finish: function (data) { data.confidence_size = data.response; }
+      data: { trial_number: trialNumber, question_type: "confidence_pulse" },
+      on_finish: function (data) { data.confidence_pulse = data.response; }
+    });
+
+    // 3. PITCH (330hz / 660hz / none) avec bouton d'écoute sur 330 Hz et 660 Hz
+    timeline.push({
+      type: jsPsychHtmlButtonResponse,
+      stimulus: `<p>Quelle était la <strong>hauteur du son</strong> associé à cet objet ?</p><div id="pitch-options" style="display:flex;gap:16px;justify-content:center;align-items:flex-start;"></div>`,
+      choices: ["Valider"],
+      button_html: '<button class="jspsych-btn" disabled>%choice%</button>',
+      data: { trial_number: trialNumber, question_type: "pitch" },
+      on_load: function () {
+        const btn = document.querySelector(".jspsych-btn");
+        const container = document.getElementById("pitch-options");
+        const opts = [
+          { val: '330hz', lab: '330 Hz', freq: 330 },
+          { val: '660hz', lab: '660 Hz', freq: 660 },
+          { val: 'none', lab: 'Rien vu', freq: null }
+        ];
+        opts.forEach(opt => {
+          const w = document.createElement("div");
+          w.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px;border-radius:8px;border:2px solid transparent;";
+          const audioBtnHtml = opt.freq
+            ? `<button type="button" class="jspsych-btn pitch-preview-btn" data-freq="${opt.freq}" style="padding:4px 10px;font-size:0.8em;background:#2563eb;color:#fff;border-radius:6px;">🔊 Écouter</button>`
+            : `<span style="height:26px;display:inline-block;"></span>`;
+
+          w.innerHTML = `${getPitchSVG(opt.val, 90)}<span style="font-size:0.85em;font-weight:600;">${opt.lab}</span>${audioBtnHtml}`;
+
+          const previewBtn = w.querySelector(".pitch-preview-btn");
+          if (previewBtn) {
+            previewBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              playPitch(opt.freq === 660);
+            });
+          }
+
+          w.onclick = () => {
+            Array.from(container.children).forEach(d => { d.style.borderColor = "transparent"; d.style.backgroundColor = "transparent"; });
+            w.style.borderColor = "#2ecc71"; w.style.backgroundColor = "rgba(46, 204, 113, 0.2)";
+            btn.disabled = false;
+            window._selectedPitch = opt.val;
+          };
+          container.appendChild(w);
+        });
+      },
+      on_finish: function (data) {
+        data.participant_response_pitch = window._selectedPitch || null;
+        window._selectedPitch = null;
+      }
+    });
+
+    timeline.push({
+      type: jsPsychHtmlSliderResponse,
+      stimulus: "Indiquez votre niveau de certitude quant au <strong>son</strong> choisi :",
+      labels: ["Faible certitude", "Totale certitude"],
+      min: 0, max: 100, step: 1, slider_start: 50, require_movement: true,
+      data: { trial_number: trialNumber, question_type: "confidence_pitch" },
+      on_finish: function (data) { data.confidence_pitch = data.response; }
     });
   }
 
@@ -684,6 +825,8 @@ if (!isComputer()) {
         const ctx = canvas.getContext("2d");
         const baseR = BASE_RADIUS;
         let rebTarget = 0, isRunning = false;
+        let usEntered = false;
+        let usPulseAudioTimer = null;
 
         const shapes = [];
         for (let j = 0; j < 4; j++) {
@@ -713,6 +856,23 @@ if (!isComputer()) {
           if (shape.group === 2 && currentPitch === 'high') rebTarget++;
         }
 
+        function startUnexpectedAudioLoop() {
+          if (!hasUnexpected || !pulseHz || !usAudioHz || usPulseAudioTimer) return;
+          playUnexpectedPulseTone();
+          const intervalMs = Math.round(1000 / pulseHz);
+          usPulseAudioTimer = setInterval(() => {
+            if (!isRunning) return;
+            playUnexpectedPulseTone();
+          }, intervalMs);
+        }
+
+        function stopUnexpectedAudioLoop() {
+          if (usPulseAudioTimer) {
+            clearInterval(usPulseAudioTimer);
+            usPulseAudioTimer = null;
+          }
+        }
+
         let startTime = performance.now();
         let lastFrame = startTime;
 
@@ -737,6 +897,10 @@ if (!isComputer()) {
           });
 
           if (config.allowUS && hasUnexpected && elapsed > 10000) {
+            if (!usEntered) {
+              usEntered = true;
+              startUnexpectedAudioLoop();
+            }
             unexpected.x += unexpected.speed * dt;
           }
         }
@@ -751,8 +915,8 @@ if (!isComputer()) {
 
           if (config.allowUS && hasUnexpected && elapsed > 10000) {
             let r = BASE_RADIUS / 2;
-            if (unexpectedSizeMode === 'pulsing') {
-              r = (BASE_RADIUS * (1 + PULSE_AMPLITUDE * Math.sin(2 * Math.PI * PULSE_FREQ * (elapsed / 1000)))) / 2;
+            if (unexpectedSizeMode === 'pulsing' && pulseHz) {
+              r = (BASE_RADIUS * (1 + PULSE_AMPLITUDE * Math.sin(2 * Math.PI * pulseHz * (elapsed / 1000)))) / 2;
             }
             ctx.fillStyle = unexpectedColor;
             if (unexpectedShape === 'circle') {
@@ -786,7 +950,10 @@ if (!isComputer()) {
           requestAnimationFrame(loop);
         }, 500);
 
-        setTimeout(() => { isRunning = false; }, config.duration_ms - 500);
+        setTimeout(() => {
+          isRunning = false;
+          stopUnexpectedAudioLoop();
+        }, config.duration_ms - 500);
 
         window._currentTrialRebounds = () => rebTarget;
       },
@@ -902,6 +1069,7 @@ if (!isComputer()) {
       const payload = {
         subject_id: subject_id,
         is_bot_flag: botFlag,
+        condition_id: selectedCond.id,
         trials: jsPsych.data.get().values(),
         interactions: jsPsych.data.getInteractionData().values()
       };
