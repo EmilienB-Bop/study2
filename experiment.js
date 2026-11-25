@@ -99,21 +99,24 @@ if (!isComputer()) {
   document.addEventListener('click', () => { getAudioCtx(); });
 
   function playPitch(isHigh) {
-    try {
-      const ctx = getAudioCtx();
-      if (!ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = isHigh ? 660 : 330;
-      gain.gain.setValueAtTime(isHigh ? 0.2 : 0.6, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.15);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.15);
-    } catch (e) {}
-  }
+  try {
+    for (let i = 1; i <= 4; i++) { // choix du nombre d'harmoniques
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = isHigh ? 660*i : 330*i;
+    const gainValue = isHigh ? 1 / Math.pow(2,i) : 1 / Math.pow(2,i); // décroissance de 6dB des harmoniques 
+    gain.gain.setValueAtTime(0, ctx.currentTime); // on commence à 0
+    gain.gain.linearRampToValueAtTime(gainValue, ctx.currentTime + 0.002); // attaque 2 ms
+    gain.gain.exponentialRampToValueAtTime(0.000001, ctx.currentTime + 0.6); // décroissance expo de 600 ms
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.6);
+    }
+  } catch (e) { /* audio unavailable: continue silently */ }
+}
 
   function handleRebound(shape, onRebound) {
     const currentPitch = shape.pitch;
