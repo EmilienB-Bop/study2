@@ -34,7 +34,7 @@ if (!isComputer()) {
         <h2>Appareil non compatible</h2>
         <p>Pour passer cette expérience, il vous faut impérativement être sur un ordinateur (clavier et souris).</p>
         <p>Merci de renouveler l'expérience depuis un ordinateur.</p>
-        <button onclick="window.location.href='https://www.univ-tlse2.fr/'" style="padding:12px 24px;font-weight:600;color:#fff;background:#2563eb;border:none;border-radius:8px;cursor:pointer;">Quitter</button>
+        <button onclick="window.location.href='https://www.univ-tlse2.fr/'" style="padding:12px 24px;font-weight:600;color:#fff;background:#2563eb;border:none;border:radius:8px;cursor:pointer;">Quitter</button>
       </div>
     </div>
   `;
@@ -50,17 +50,17 @@ if (!isComputer()) {
   let botFlag = false;
 
   // ─── PLAN FACTORIEL DES CONDITIONS DE STIMULUS INATTENDU ────────────────────
-  // 1) Condition "pure" sans stimulus inattendu (aucun croisement)
-  // 2) Conditions avec stimulus inattendu :
+  // Stimulus inattendu : toujours un rond ('circle') noir ('black'), croisement :
   //    - vitesse : 'slow' (-80 px/s) vs 'fast' (-200 px/s)
   //    - pulsation visuelle + auditive : 3 Hz vs 6 Hz
   //    - fréquence sonore : 330 Hz vs 660 Hz
-  //    - forme ('circle'/'triangle') x couleur ('black'/'red')
-  const BASE_RADIUS     = 20;
-  const PULSE_AMPLITUDE = 0.10;
-  const SPEED_VALUES_PX = { slow: -80, fast: -200 };
-  const PULSE_FREQS_HZ  = [3, 6];
-  const AUDIO_FREQS_HZ  = [330, 660];
+  // Plus la condition "pure" ('pure_none') sans stimulus inattendu.
+  const BASE_RADIUS        = 20;
+  const PULSE_AMPLITUDE    = 0.10;
+  const SPEED_VALUES_PX    = { slow: -80, fast: -200 };
+  const PULSE_FREQS_HZ     = [3, 6];
+  const AUDIO_FREQS_HZ     = [330, 660];
+  const US_VISUAL_START_MS = 10000;
 
   function buildConditionPool() {
     const pool = [
@@ -77,28 +77,22 @@ if (!isComputer()) {
       }
     ];
 
-    const shapes = ['circle', 'triangle'];
-    const colors = ['black', 'red'];
     const speedConds = ['slow', 'fast'];
 
     for (const usSpeedCond of speedConds) {
       for (const pulseHz of PULSE_FREQS_HZ) {
         for (const audioHz of AUDIO_FREQS_HZ) {
-          for (const shape of shapes) {
-            for (const color of colors) {
-              pool.push({
-                id: `us_${usSpeedCond}_pulse${pulseHz}hz_freq${audioHz}hz_${shape}_${color}`,
-                hasUnexpected: true,
-                shape: shape,
-                color: color,
-                sizeMode: 'pulsing',
-                usSpeedCond: usSpeedCond,
-                usSpeedPx: SPEED_VALUES_PX[usSpeedCond],
-                pulseHz: pulseHz,
-                audioHz: audioHz
-              });
-            }
-          }
+          pool.push({
+            id: `us_${usSpeedCond}_pulse${pulseHz}hz_freq${audioHz}hz_circle_black`,
+            hasUnexpected: true,
+            shape: 'circle',
+            color: 'black',
+            sizeMode: 'pulsing',
+            usSpeedCond: usSpeedCond,
+            usSpeedPx: SPEED_VALUES_PX[usSpeedCond],
+            pulseHz: pulseHz,
+            audioHz: audioHz
+          });
         }
       }
     }
@@ -111,7 +105,7 @@ if (!isComputer()) {
 
   const hasUnexpected      = selectedCond.hasUnexpected;
   const unexpectedShape    = selectedCond.shape;
-  const unexpectedColor    = selectedCond.color;
+  const unexpectedColor    = selectedCond.color || 'black';
   const unexpectedSizeMode = selectedCond.sizeMode;
   const usSpeedCond        = selectedCond.usSpeedCond;
   const unexpectedSpeed    = selectedCond.usSpeedPx;
@@ -123,12 +117,13 @@ if (!isComputer()) {
     condition_id: selectedCond.id,
     has_unexpected: hasUnexpected,
     us_shape: unexpectedShape,
-    us_color: unexpectedColor,
+    us_color: selectedCond.color,
     us_size_mode: unexpectedSizeMode,
     us_speed_cond: usSpeedCond,
     unexpected_speed_px: unexpectedSpeed,
     us_pulse_hz: pulseHz,
-    us_audio_hz: usAudioHz
+    us_audio_hz: usAudioHz,
+    us_visual_start_ms: US_VISUAL_START_MS
   });
 
   // ─── MOTEUR AUDIO ───────────────────────────────────────────────────────────
@@ -825,7 +820,7 @@ if (!isComputer()) {
         const ctx = canvas.getContext("2d");
         const baseR = BASE_RADIUS;
         let rebTarget = 0, isRunning = false;
-        let usEntered = false;
+        let usAudioActive = false;
         let usPulseAudioTimer = null;
 
         const shapes = [];
@@ -852,21 +847,35 @@ if (!isComputer()) {
           speed: unexpectedSpeed
         };
 
+        function getUnexpectedRadius(elapsed) {
+          if (unexpectedSizeMode === 'pulsing' && pulseHz) {
+            return (BASE_RADIUS * (1 + PULSE_AMPLITUDE * Math.sin(2 * Math.PI * pulseHz * (elapsed / 1000)))) / 2;
+          }
+          return BASE_RADIUS / 2;
+        }
+
+        function isUnexpectedVisuallyOnScreen(elapsed, r) {
+          if (!config.allowUS || !hasUnexpected || elapsed <= US_VISUAL_START_MS) return false;
+          return (unexpected.x + r > 0) && (unexpected.x - r < canvas.width);
+        }
+
         function onRebound(shape, currentPitch) {
           if (shape.group === 2 && currentPitch === 'high') rebTarget++;
         }
 
         function startUnexpectedAudioLoop() {
           if (!hasUnexpected || !pulseHz || !usAudioHz || usPulseAudioTimer) return;
+          usAudioActive = true;
           playUnexpectedPulseTone();
           const intervalMs = Math.round(1000 / pulseHz);
           usPulseAudioTimer = setInterval(() => {
-            if (!isRunning) return;
+            if (!isRunning || !usAudioActive) return;
             playUnexpectedPulseTone();
           }, intervalMs);
         }
 
         function stopUnexpectedAudioLoop() {
+          usAudioActive = false;
           if (usPulseAudioTimer) {
             clearInterval(usPulseAudioTimer);
             usPulseAudioTimer = null;
@@ -896,12 +905,16 @@ if (!isComputer()) {
             } else { if (s.lastRebound === "top" || s.lastRebound === "bottom") s.lastRebound = null; }
           });
 
-          if (config.allowUS && hasUnexpected && elapsed > 10000) {
-            if (!usEntered) {
-              usEntered = true;
-              startUnexpectedAudioLoop();
-            }
+          if (config.allowUS && hasUnexpected && elapsed > US_VISUAL_START_MS) {
             unexpected.x += unexpected.speed * dt;
+          }
+
+          const currentR = getUnexpectedRadius(elapsed);
+          const usVisible = isUnexpectedVisuallyOnScreen(elapsed, currentR);
+          if (usVisible && !usAudioActive) {
+            startUnexpectedAudioLoop();
+          } else if (!usVisible && usAudioActive) {
+            stopUnexpectedAudioLoop();
           }
         }
 
@@ -913,22 +926,12 @@ if (!isComputer()) {
             ctx.fill();
           });
 
-          if (config.allowUS && hasUnexpected && elapsed > 10000) {
-            let r = BASE_RADIUS / 2;
-            if (unexpectedSizeMode === 'pulsing' && pulseHz) {
-              r = (BASE_RADIUS * (1 + PULSE_AMPLITUDE * Math.sin(2 * Math.PI * pulseHz * (elapsed / 1000)))) / 2;
-            }
+          const r = getUnexpectedRadius(elapsed);
+          if (isUnexpectedVisuallyOnScreen(elapsed, r)) {
             ctx.fillStyle = unexpectedColor;
-            if (unexpectedShape === 'circle') {
-              ctx.beginPath(); ctx.arc(unexpected.x, unexpected.y, r, 0, Math.PI * 2); ctx.fill();
-            } else if (unexpectedShape === 'triangle') {
-              ctx.beginPath();
-              ctx.moveTo(unexpected.x, unexpected.y - r * 1.3);
-              ctx.lineTo(unexpected.x - r * 1.15, unexpected.y + r * 0.75);
-              ctx.lineTo(unexpected.x + r * 1.15, unexpected.y + r * 0.75);
-              ctx.closePath();
-              ctx.fill();
-            }
+            ctx.beginPath();
+            ctx.arc(unexpected.x, unexpected.y, r, 0, Math.PI * 2);
+            ctx.fill();
           }
 
           ctx.fillStyle = "black"; ctx.font = "40px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
